@@ -12,6 +12,7 @@ mysql-connector-python = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 sqlalchemy-utils = "*"
 bcrypt = "*"
+email-validator = "*"
 
 [dev-packages]
 
