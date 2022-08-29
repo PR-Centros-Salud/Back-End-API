@@ -8,6 +8,7 @@ from config.database import Base
 # SQLAlchemy
 from sqlalchemy import Column, String, Date, Integer, ForeignKey
 from sqlalchemy_utils import EmailType
+from sqlalchemy.orm import relationship
 
 
 class Person(BaseTable):
@@ -23,12 +24,16 @@ class Person(BaseTable):
     gender = Column(String(1), nullable=False)
     birthdate = Column(Date, nullable=False)
     photo = Column(String(50), nullable=True)
+    province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
+    province = relationship("Province", back_populates="people")
+    phone = relationship("Phone", back_populates="person")
+
     discriminator = Column("role", String(50), nullable=False)
-    __mapper_args__ = {'polymorphic_on': discriminator}
+    __mapper_args__ = {"polymorphic_on": discriminator}
 
     @property
     def password(self):
-        raise AttributeError('password is not a readable attribute')
+        raise AttributeError("password is not a readable attribute")
 
     @password.setter
     def password(self, password):
@@ -36,25 +41,3 @@ class Person(BaseTable):
 
     def verify_password(self, password):
         return bcrypt.verify(password, self._password)
-
-
-# class
-class Admin(Person):
-    __tablename__ = "admin"
-    __mapper_args__ = {'polymorphic_identity': 'admin'}
-
-    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
-
-
-class Client(Person):
-    __tablename__ = "client"
-    __mapper_args__ = {'polymorphic_identity': 'client'}
-
-    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
-
-
-class MedicalPersonal(Person):
-    __tablename__ = "medical_personal"
-    __mapper_args__ = {'polymorphic_identity': 'medical_personal'}
-
-    id = Column(Integer, ForeignKey('person.id'), primary_key=True)

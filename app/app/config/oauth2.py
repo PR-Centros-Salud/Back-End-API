@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from models.person import Person
+from models.person.person import Person
 from cruds.person import get_person_username, get_person_by_username
 
 load_dotenv()
@@ -28,8 +28,6 @@ def authenticate_user(db: Session, username: str, password: str):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-# class UserInDB(User):
-#     hashed_password: str
 def verify_password(password, person: Person):
     return person.verify_password(password)
 
