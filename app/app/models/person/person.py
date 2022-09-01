@@ -14,20 +14,22 @@ from sqlalchemy.orm import relationship
 class Person(BaseTable):
     __tablename__ = "person"
     first_name = Column(String(50), nullable=False)
-    last_name = Column(String(30), nullable=False)
+    last_name = Column(String(50), nullable=False)
     second_last_name = Column(String(50), nullable=True)
-    username = Column(String(50), nullable=False, unique=True)
+    username = Column(String(30), nullable=False, unique=True)
     email = Column(EmailType, nullable=False, unique=True)
     _password = Column("password", String(200), nullable=False)
     identity_card = Column(String(30), nullable=False, unique=True)
     address = Column(String(50), nullable=False)
     gender = Column(String(1), nullable=False)
     birthdate = Column(Date, nullable=False)
-    photo = Column(String(50), nullable=True)
-    province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
-    province = relationship("Province", back_populates="people")
-    phone = relationship("Phone", back_populates="person")
+    photo_url = Column(String(150), nullable=True)
 
+    # Relationships
+    phone = relationship("Phone")
+    province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
+
+    # province = relationship("Province", back_populates="person")
     discriminator = Column("role", String(50), nullable=False)
     __mapper_args__ = {"polymorphic_on": discriminator}
 
