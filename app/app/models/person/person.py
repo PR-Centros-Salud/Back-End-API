@@ -20,18 +20,21 @@ class Person(BaseTable):
     email = Column(EmailType, nullable=False, unique=True)
     _password = Column("password", String(200), nullable=False)
     identity_card = Column(String(30), nullable=False, unique=True)
+    phone = Column(String(20), nullable=False)
     address = Column(String(50), nullable=False)
     gender = Column(String(1), nullable=False)
     birthdate = Column(Date, nullable=False)
     photo_url = Column(String(150), nullable=True)
 
     # Relationships
-    phone = relationship("Phone")
     province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
 
     # province = relationship("Province", back_populates="person")
     discriminator = Column("role", String(50), nullable=False)
-    __mapper_args__ = {"polymorphic_on": discriminator}
+    __mapper_args__ = {
+        "polymorphic_identity": "person",
+        "polymorphic_on": discriminator
+    }
 
     @property
     def password(self):

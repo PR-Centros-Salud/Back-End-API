@@ -8,6 +8,6 @@ from sqlalchemy import Column, Integer, String
 
 class Client(Person):
     __tablename__ = "client"
-    __mapper_args__ = {'polymorphic_identity': 'client'}
+    __mapper_args__ = {"polymorphic_identity": "client"}
 
-    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    id = Column(Integer, ForeignKey("person.id"), primary_key=True)

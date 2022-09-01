@@ -16,18 +16,21 @@ class Institution(BaseTable):
     # Entity Fields
     name = Column(String(100), nullable=False)
     address = Column(String(100), nullable=False)
+    phone = Column(String(20), nullable=False)
+
+    # Relationships
     institution_type_id = Column(Integer, ForeignKey(
         "institution_type.id"), nullable=False)
-    institution_type = relationship(
-        "InstitutionType", back_populates="institutions")
-    admin_id = Column(Integer, ForeignKey("admin.id"), nullable=True)
-    admin = relationship("Admin", back_populates="institution", uselist=False)
+    admin_id = Column(Integer, ForeignKey("admin.id"))
+    admin = relationship("Admin", back_populates="institution")
+    medical_personal = relationship(
+        "MedicalInstution", back_populates="institution")
 
 
-class InstitutionType(Base):
-    __tablename__ = 'institution_type'
+class InstitutionType(BaseTable):
+    __tablename__ = "institution_type"
 
-    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    institutions = relationship(
-        'Institution', back_populates="institution_type")
+
+    # Relationships
+    institution = relationship("Institution")

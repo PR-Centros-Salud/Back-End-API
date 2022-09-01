@@ -14,9 +14,7 @@ class Admin(Person):
     __tablename__ = 'admin'
     __mapper_args__ = {'polymorphic_identity': 'admin'}
 
+    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
     # Entity Fields
-    id = Column(Integer, primary_key=True)
-    institution_id = Column(Integer, ForeignKey(
-        'institution.id'), nullable=True)
     institution = relationship(
-        "Institution", back_populates="admins", uselist=False)
+        "Institution", back_populates="admin", uselist=False)
