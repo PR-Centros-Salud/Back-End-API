@@ -9,6 +9,7 @@ from config.database import Base
 from sqlalchemy import Column, String, Date, Integer, ForeignKey
 from sqlalchemy_utils import EmailType
 from sqlalchemy.orm import relationship
+from models.location import Province
 
 
 class Person(BaseTable):

@@ -1,6 +1,6 @@
 # Library Importation
 from models.person.person import Person
-from schemas.person import PersonCreate, PersonGet
+from schemas.person.person import PersonCreate, PersonGet
 
 # SQLAlchemy
 from sqlalchemy.orm import Session

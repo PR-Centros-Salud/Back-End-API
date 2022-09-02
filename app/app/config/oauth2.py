@@ -13,16 +13,20 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from models.person.person import Person
-from cruds.person import get_person_username, get_person_by_username
+from models.person.admin import Admin
+from models.person.client import Client
+from models.person.medicalPersonal import MedicalPersonal
+from cruds.person.person import get_person_username, get_person_by_username
+from schemas.config.auth import Token, TokenData
 
 load_dotenv()
 
 
-def authenticate_user(db: Session, username: str, password: str):
-    user = fake_db.get(username)
-    if not user:
-        return False
-    return user["hashed_password"] == fake_hash_password(password)
+# def authenticate_user(db: Session, username: str, password: str):
+#     user = fake_db.get(username)
+#     if not user:
+#         return False
+#     return user["hashed_password"] == fake_hash_password(password)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -74,14 +78,30 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = schemas.TokenData(username=username)
+        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = crud.get_person_by_username(db, username)
+    user = get_person_by_username(db, username)
     if user is None:
         raise credentials_exception
     return user
 
 
-async def get_current_active_user(current_user: Person = Depends(get_current_user)):
-    return current_user
+async def get_current_active_user(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.status != 1:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    else:
+        if current_user.discriminator == "admin":
+            user = db.query(Admin).filter(Admin.id == current_user.id).first()
+        elif current_user.discriminator == "client":
+            user = db.query(Client).filter(
+                Client.id == current_user.id).first()
+        else:
+            user = db.query(MedicalPersonal).filter(
+                MedicalPersonal.id == current_user.id).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=400, detail="Incorrect username or password")
+
+        return current_user

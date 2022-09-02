@@ -14,4 +14,4 @@ class BaseTable(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow,
                         onupdate=datetime.utcnow)
-    status = Column(SmallInteger, default=True)
+    status = Column(SmallInteger, default=1)

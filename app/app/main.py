@@ -3,6 +3,8 @@ from config.database import SessionLocal, engine, get_db
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+#import timedelta
+from datetime import datetime, timedelta
 
 # Auth
 import os
@@ -11,9 +13,11 @@ from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from routers import person, experience
+from routers.person import client, person
+# from routers import person, experience
 from config.database import Base
-
+from schemas.config.auth import Token, TokenData
+from config.oauth2 import authenticate_user, create_access_token
 load_dotenv()
 
 # openssl rand -hex 32
@@ -21,8 +25,9 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
+app.include_router(client.router)
 app.include_router(person.router)
-app.include_router(experience.router)
 
 
 @app.get("/")
@@ -104,21 +109,24 @@ async def read_root():
 #     return user
 # async def get_current_active_user(current_user: models.Person = Depends(get_current_user)):
 #     return current_user
-# @app.post("/token", response_model=schemas.Token)
-# async def login(
-#     # Change to user model
-#     form_data: OAuth2PasswordRequestForm = Depends(),
-#     db: Session = Depends(get_db)
-# ):
-#     user = authenticate_user(db, form_data.username, form_data.password)
-#     if not user:
-#         raise HTTPException(
-#             status_code=400, detail="Incorrect username or password")
-#     access_token_expires = timedelta(
-#         minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
-#     access_token = create_access_token(
-#         data={"sub": user.username}, expires_delta=access_token_expires)
-#     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.post("/token", response_model=Token)
+async def login(
+    # Change to user model
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=400, detail="Incorrect username or password")
+    access_token_expires = timedelta(
+        minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires)
+    return {"access_token": access_token, "token_type": "bearer"}
+
 # @app.get("/users/me")
 # async def read_users_me(current_user: schemas.PersonGet = Depends(get_current_active_user)):
 #     return current_user

@@ -8,10 +8,10 @@ from config.database import Base
 # SQLAlchemy
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-
+# from models.person.medicalPersonal import MedicalInstitution
 
 class Institution(BaseTable):
-    __tablename__ = 'institution'
+    __tablename__ = "institution"
 
     # Entity Fields
     name = Column(String(100), nullable=False)
@@ -23,8 +23,8 @@ class Institution(BaseTable):
         "institution_type.id"), nullable=False)
     admin_id = Column(Integer, ForeignKey("admin.id"))
     admin = relationship("Admin", back_populates="institution")
-    medical_personal = relationship(
-        "MedicalInstution", back_populates="institution")
+    # medical_personal = relationship(
+    #     "MedicalInstution", back_populates="institution")
 
 
 class InstitutionType(BaseTable):

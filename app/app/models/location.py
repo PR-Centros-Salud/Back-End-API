@@ -1,12 +1,9 @@
-# Library Importation
-from models.baseTable import BaseTable
-
 # Configs
-from email.policy import default
 from config.database import Base
 
 # SQLAlchemy
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class State(Base):
@@ -28,5 +25,5 @@ class Province(Base):
     # Relationships
     state_id = Column(Integer, ForeignKey('state.id'), nullable=False)
     person = relationship('Person',
-                          #back_populates='province'
+                          # back_populates='province'
                           )

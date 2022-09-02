@@ -3,7 +3,7 @@ from models.baseTable import BaseTable
 from models.person.person import Person
 
 # SQLAlchemy
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, ForeignKey
 
 
 class Client(Person):
