@@ -21,14 +21,6 @@ from schemas.config.auth import Token, TokenData
 
 load_dotenv()
 
-
-# def authenticate_user(db: Session, username: str, password: str):
-#     user = fake_db.get(username)
-#     if not user:
-#         return False
-#     return user["hashed_password"] == fake_hash_password(password)
-
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
