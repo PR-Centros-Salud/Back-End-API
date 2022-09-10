@@ -6,10 +6,10 @@ from email.policy import default
 from config.database import Base
 
 # SQLAlchemy
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, SmallInteger
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, SmallInteger, DateTime
 from sqlalchemy.orm import relationship
 from models.baseTable import BaseTable
-
 
 # class MedicalInstitution(Base):
 #     __tablename__ = "medical_institution"
@@ -36,6 +36,10 @@ class MedicalPersonal(Person):
     __mapper_args__ = {"polymorphic_identity": "medical_personal"}
 
     id = Column(Integer, ForeignKey("person.id"), primary_key=True)
+    medical_personal_created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    medical_personal_updated_at = Column(DateTime, default=datetime.utcnow, nullable=False,
+                        onupdate=datetime.utcnow)
+    medical_personal_status = Column(SmallInteger, default=1, nullable=False)
 
     # Relationships
     # medical_institution = relationship(

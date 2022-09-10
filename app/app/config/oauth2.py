@@ -75,12 +75,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     try:
         payload = jwt.decode(token, os.getenv("SECRET_KEY"),
                              algorithms=[os.getenv("ALGORITHM")])
+
         username: str = payload.get("sub")
+
         if username is None:
             raise credentials_exception
+
         token_data = TokenData(username=username)
+
     except JWTError:
         raise credentials_exception
+    print(username)
     user = get_person_by_username(db, username)
     if user is None:
         raise credentials_exception

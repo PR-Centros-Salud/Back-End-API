@@ -1,25 +1,17 @@
-import os
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from cruds.person.person import create_person
-from schemas.person.person import PersonCreate, PersonGet
+from cruds.person import person as crud_person
+from schemas.person.person import PersonCreate, PersonGet, PersonUpdatePassword
 from config.database import get_db
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from schemas.config.auth import Token, TokenData
-from models.person.admin import Admin
-from models.person.client import Client
-from models.person.medicalPersonal import MedicalPersonal
-
-load_dotenv()
 
 router = APIRouter(
     prefix="/person",
     tags=["Persons"]
 )
-
 
 @router.get("/me")
 async def read_users_me(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
@@ -45,3 +37,12 @@ async def login(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.patch("/update-password")
+async def update_password(
+    person: PersonUpdatePassword,
+    db: Session = Depends(get_db),
+    current_user: PersonGet = Depends(get_current_active_user)
+):
+    return crud_person.update_password(db=db, person=person, id=current_user.id)

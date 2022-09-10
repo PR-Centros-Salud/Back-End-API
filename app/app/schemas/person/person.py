@@ -6,24 +6,37 @@ from datetime import datetime, date
 
 class PersonCreate(BaseModel):
     first_name: str = Field(...,
-                            description="First name of the person", max_length=50)
+                            description="First name of the person", max_length=50, min_length=2)
     last_name: str = Field(...,
-                           description="Last name of the person", max_length=50)
-    second_last_name: Optional[str] = Field(...,
-                                            description="Second last name of the person", max_length=50)
+                           description="Last name of the person", max_length=50, min_length=2)
+    second_last_name: Optional[str] = Field(None,
+                                            description="Second last name of the person", max_length=50, min_length=2)
     username: str = Field(...,
-                          description="Username of the person", max_length=30)
+                          description="Username of the person", max_length=30, min_length=3)
     email: EmailStr = Field(..., description="Email of the person")
-    password: str
+    password: str = Field(...,
+                          description="Password of the person", max_length=20)
     phone: str = Field(...,
                        description="Phone of the person", max_length=20)
     identity_card: str = Field(...,
                                description="Identity card of the person", max_length=30)
     address: str = Field(...,
-                         description="Address of the person", max_length=50)
+                         description="Address of the person", max_length=50, min_length=2)
     gender: str = Field(..., description="Gender of the person", max_length=1)
     birthdate: date = Field(..., description="Birthdate of the person")
     province_id: int = Field(..., description="Province id of the person")
+
+    @validator('birthdate')
+    def validate_birthdate(cls, v):
+        if v > datetime.now().date():
+            raise ValueError("Birthdate must be less than now")
+        return v
+
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v not in ['M', 'F', 'U']:
+            raise ValueError("Gender is not valid")
+        return v
 
     class Config:
         orm_mode = True
