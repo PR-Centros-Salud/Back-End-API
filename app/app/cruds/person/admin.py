@@ -4,8 +4,8 @@ from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
-from validators.location import validate_location
 from validators.person import validate_create_person
+from validators.location import validate_location
 from cruds.person.person import delete_person
 
 
@@ -47,8 +47,8 @@ def update_admin(db: Session, admin: AdminUpdate, id: int):
         db_admin.phone = admin.phone
     if (admin.address):
         db_admin.address = admin.address
-    if (admin.province_id):
-        db_admin.province = admin.province
+    if (admin.province_id and validate_location(db, admin.province_id)):
+        db_admin.province_id = admin.province_id
     db.commit()
     db.refresh(db_admin)
     return db_admin

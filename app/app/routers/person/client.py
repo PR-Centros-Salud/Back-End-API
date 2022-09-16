@@ -1,5 +1,4 @@
-import os
-from fastapi import FastAPI, HTTPException, APIRouter, Depends
+from fastapi import APIRouter, Depends
 from cruds.person import client as crud_client
 from config.database import get_db
 from sqlalchemy.orm import Session

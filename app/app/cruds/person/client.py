@@ -47,8 +47,8 @@ def update_client(db: Session, client: ClientUpdate, id: int):
         db_client.phone = client.phone
     if (client.address):
         db_client.address = client.address
-    if (client.province_id):
-        db_client.province = client.province
+    if (client.province_id and validate_location(db, client.province_id)):
+        db_client.province_id = client.province_id
     db.commit()
     db.refresh(db_client)
     return db_client

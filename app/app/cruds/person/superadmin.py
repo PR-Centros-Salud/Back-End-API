@@ -36,6 +36,7 @@ def update_superadmin(db: Session, superadmin: SuperAdminUpdate, id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="SuperAdmin not found"
         )
+    print(superadmin.province_id)
 
     if (superadmin.first_name):
         db_superadmin.first_name = superadmin.first_name
@@ -49,8 +50,8 @@ def update_superadmin(db: Session, superadmin: SuperAdminUpdate, id: int):
         db_superadmin.phone = superadmin.phone
     if (superadmin.address):
         db_superadmin.address = superadmin.address
-    if (superadmin.province_id):
-        db_superadmin.province = superadmin.province
+    if (superadmin.province_id and validate_location(db, superadmin.province_id)):
+        db_superadmin.province_id = superadmin.province_id
     db.commit()
     db.refresh(db_superadmin)
     return db_superadmin

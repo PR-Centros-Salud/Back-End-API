@@ -54,6 +54,7 @@ class PersonGet(BaseModel):
     gender: str
     address: str
     discriminator: str
+    province_id: int
 
     class Config:
         orm_mode = True
@@ -77,6 +78,8 @@ class PersonUpdate(BaseModel):
     province_id: Optional[int] = Field(None,
                                        description="Province id of the person")
 
+    class Config:
+        orm_mode = True
 
 class PersonUpdatePassword(BaseModel):
     old_password: str
