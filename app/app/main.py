@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from routers.person import client, person, admin
+from routers.person import client, person, admin, superadmin
 # from routers import person, experience
 from config.database import Base
 from schemas.config.auth import Token, TokenData
@@ -30,6 +30,7 @@ app = FastAPI()
 app.include_router(client.router)
 app.include_router(person.router)
 app.include_router(admin.router)
+app.include_router(superadmin.router)
 
 
 @app.get("/")

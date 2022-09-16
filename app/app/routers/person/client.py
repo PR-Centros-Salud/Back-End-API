@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from cruds.person import client as crud_client
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.person.client import ClientCreate, ClientGet, ClientUpdate, ClientUpdatePassword
+from schemas.person.client import ClientCreate, ClientGet, ClientUpdate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token
 

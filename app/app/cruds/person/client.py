@@ -1,7 +1,7 @@
 from models.person.client import Client
 from models.location import Province
 from models.person.person import Person
-from schemas.person.client import ClientCreate, ClientGet, ClientUpdate, ClientUpdatePassword
+from schemas.person.client import ClientCreate, ClientGet, ClientUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
@@ -63,6 +63,6 @@ def delete_client(db: Session, id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Client not found"
         )
-    db_client.status = 0
+    db_client.client_status = 0
     db.commit()
     return {"detail": "Client deleted successfully"}

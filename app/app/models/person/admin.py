@@ -19,3 +19,18 @@ class Admin(Person):
     # Entity Fields
     institution = relationship(
         "Institution", back_populates="admin", uselist=False)
+
+# {
+#   "first_name": "string",
+#   "last_name": "string",
+#   "second_last_name": "string",
+#   "username": "string",
+#   "email": "user@example.com",
+#   "password": "string",
+#   "phone": "string",
+#   "identity_card": "2312",
+#   "address": "string",
+#   "gender": "M",
+#   "birthdate": "2022-09-15",
+#   "province_id": 1
+# }

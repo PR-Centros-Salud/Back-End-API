@@ -7,6 +7,7 @@ from config.oauth2 import get_current_active_user, authenticate_user, create_acc
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from schemas.config.auth import Token, TokenData
+import os
 
 router = APIRouter(
     prefix="/person",

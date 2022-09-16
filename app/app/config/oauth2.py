@@ -16,8 +16,11 @@ from models.person.person import Person
 from models.person.admin import Admin
 from models.person.client import Client
 from models.person.medicalPersonal import MedicalPersonal
+from models.person.superadmin import SuperAdmin
 from cruds.person.person import get_person_username, get_person_by_username
 from schemas.config.auth import Token, TokenData
+from sqlalchemy import exc, and_
+
 
 load_dotenv()
 
@@ -65,11 +68,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+
         payload = jwt.decode(token, os.getenv("SECRET_KEY"),
                              algorithms=[os.getenv("ALGORITHM")])
 
         username: str = payload.get("sub")
-
         if username is None:
             raise credentials_exception
 
@@ -89,16 +92,27 @@ async def get_current_active_user(current_user=Depends(get_current_user), db: Se
         raise HTTPException(status_code=400, detail="Inactive user")
     else:
         if current_user.discriminator == "admin":
-            user = db.query(Admin).filter(Admin.id == current_user.id).first()
+            user = db.query(Admin).filter(
+                and_(Admin.id == current_user.id, Admin.admin_status == 1)).first()
         elif current_user.discriminator == "client":
             user = db.query(Client).filter(
-                Client.id == current_user.id).first()
+                and_(Client.id == current_user.id, Client.client_status == 1)).first()
+        elif current_user.discriminator == "superadmin":
+            user = db.query(SuperAdmin).filter(and_(
+                SuperAdmin.id == current_user.id, SuperAdmin.super_admin_status == 1)).first()
         else:
-            user = db.query(MedicalPersonal).filter(
-                MedicalPersonal.id == current_user.id).first()
+            user = db.query(MedicalPersonal).filter(and_(
+                MedicalPersonal.id == current_user.id, MedicalPersonal.medical_personal_status == 1)).first()
 
         if not user:
             raise HTTPException(
                 status_code=400, detail="Incorrect username or password")
 
+        return current_user
+
+
+def get_current_super_admin(current_user=Depends(get_current_active_user)):
+    if current_user.discriminator != "superadmin":
+        raise HTTPException(status_code=400, detail="Action not allowed")
+    else:
         return current_user

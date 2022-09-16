@@ -20,9 +20,3 @@ class AdminUpdate(PersonUpdate):
     """AdminUpdate Schema"""
     # Add your fields here
     pass
-
-
-class AdminUpdatePassword(PersonUpdatePassword):
-    """AdminUpdatePassword Schema"""
-    # Add your fields here
-    pass

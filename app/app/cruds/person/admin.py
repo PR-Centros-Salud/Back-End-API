@@ -1,7 +1,6 @@
 from models.person.admin import Admin
 from models.location import Province
-from models.person.person import Person
-from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate, AdminUpdatePassword
+from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
@@ -65,6 +64,6 @@ def delete_admin(db: Session, id: int):
             detail="Admin not found"
         )
 
-    db_admin.status = 0
+    db_admin.admin_status = 0
     db.commit()
     return db_admin
