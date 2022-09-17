@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
 from validators.location import validate_location
-from validators.person import validate_create_person
+from validators.person.person import validate_create_person
 from cruds.person.person import delete_person
 
 

@@ -4,7 +4,7 @@ from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
-from validators.person import validate_create_person
+from validators.person.person import validate_create_person
 from validators.location import validate_location
 from cruds.person.person import delete_person
 

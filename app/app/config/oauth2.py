@@ -116,3 +116,10 @@ def get_current_super_admin(current_user=Depends(get_current_active_user)):
         raise HTTPException(status_code=400, detail="Action not allowed")
     else:
         return current_user
+
+def get_current_admin(current_user=Depends(get_current_active_user)):
+    if current_user.discriminator != "admin" or current_user.discriminator != "superadmin":
+        raise HTTPException(status_code=400, detail="Action not allowed")
+    else:
+        return current_user
+
