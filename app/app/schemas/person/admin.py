@@ -5,13 +5,12 @@ from schemas.person.person import PersonCreate, PersonGet, PersonUpdate, PersonU
 
 
 class AdminCreate(PersonCreate):
-    """AdminCreate Schema"""
-    # Add your fields here
+    institution_id: int = Field(..., description="Institution id of the admin")
     pass
 
 
 class AdminGet(PersonGet):
-    """AdminGet Schema"""
+    institution_id: int
     # Add your fields here
     pass
 

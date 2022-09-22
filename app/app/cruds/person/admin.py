@@ -4,14 +4,17 @@ from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
-from validators.person.person import validate_create_person
+from validators.person.admin import validate_create_admin
 from validators.location import validate_location
 from cruds.person.person import delete_person
 
+def get_admin_by_id(db: Session, id: int):
+    return db.query(Admin).filter(
+        and_(Admin.id == id, Admin.status == 1)).first()
 
 def create_admin(db: Session, admin: AdminCreate):
     try:
-        admin = validate_create_person(db, admin)
+        admin = validate_create_admin(db, admin)
         db_admin = Admin(**admin.dict())
         db.add(db_admin)
         db.commit()

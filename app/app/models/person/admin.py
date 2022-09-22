@@ -19,20 +19,7 @@ class Admin(Person):
     admin_status = Column(SmallInteger, default=1, nullable=False)
 
     # Relationships
-    institution_id = Column(Integer, ForeignKey("institution.id"))
+    institution_id = Column(Integer, ForeignKey(
+        "institution.id"), nullable=False)
     institution = relationship("Institution", back_populates="admin")
 
-# {
-#   "first_name": "string",
-#   "last_name": "string",
-#   "second_last_name": "string",
-#   "username": "string",
-#   "email": "user@example.com",
-#   "password": "string",
-#   "phone": "string",
-#   "identity_card": "2312",
-#   "address": "string",
-#   "gender": "M",
-#   "birthdate": "2022-09-15",
-#   "province_id": 1
-# }
