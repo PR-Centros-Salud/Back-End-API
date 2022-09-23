@@ -1,6 +1,6 @@
 # Library Importation
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime, date
 
 
@@ -10,4 +10,4 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    username: Union[str, None] = None
