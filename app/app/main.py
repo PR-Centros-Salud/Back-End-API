@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 #import timedelta
 from datetime import datetime, timedelta
-
+import sys
 # Auth
 import os
 from dotenv import load_dotenv
@@ -18,6 +18,8 @@ from routers import institution
 from config.database import Base
 from schemas.config.auth import Token, TokenData
 from config.oauth2 import authenticate_user, create_access_token
+
+sys.dont_write_bytecode = True
 
 load_dotenv()
 
