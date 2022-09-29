@@ -1,6 +1,11 @@
 from typing import Union
 from sqlalchemy.orm import Session
-from schemas.person import client as client_schema, admin as admin_schema, superadmin as superadmin_schema, medicalPersonal as medical_schema
+from schemas.person import (
+    client as client_schema,
+    admin as admin_schema,
+    superadmin as superadmin_schema,
+    medicalPersonal as medical_schema,
+)
 
 from models.person.person import Person
 from models.location import Province
@@ -9,9 +14,27 @@ from sqlalchemy import or_
 from fastapi import HTTPException, status
 
 
-def validate_create_person(db: Session, person: Union[client_schema.ClientCreate, admin_schema.AdminCreate, superadmin_schema.SuperAdminCreate, medical_schema.MedicalPersonalCreate]):
-    db_person = db.query(Person).filter(or_(Person.email == person.email, Person.username ==
-                                            person.username, Person.identity_card == person.identity_card)).filter(Person.status == 1).first()
+def validate_create_person(
+    db: Session,
+    person: Union[
+        client_schema.ClientCreate,
+        admin_schema.AdminCreate,
+        superadmin_schema.SuperAdminCreate,
+        medical_schema.MedicalPersonalCreate,
+    ],
+):
+    db_person = (
+        db.query(Person)
+        .filter(
+            or_(
+                Person.email == person.email,
+                Person.username == person.username,
+                Person.identity_card == person.identity_card,
+            )
+        )
+        .filter(Person.status == 1)
+        .first()
+    )
 
     if db_person:
         detail = "Person already exists"
@@ -23,15 +46,11 @@ def validate_create_person(db: Session, person: Union[client_schema.ClientCreate
         else:
             detail = "Identity card already exists"
 
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=detail
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
     elif not validate_location(db, person.province_id):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Province not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Province not found"
         )
     else:
         return person

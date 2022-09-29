@@ -1,4 +1,4 @@
-from models.person.medicalPersonal import MedicalPersonal
+from models.person.medicalPersonal import MedicalPersonal, Specialization
 from datetime import datetime
 from models.person.person import Person
 from models.person.medicalPersonal import MedicalInstitution
@@ -7,6 +7,8 @@ from schemas.person.medicalPersonal import (
     MedicalPersonalGet,
     MedicalPersonalUpdate,
     MedicalInstitutionCreate,
+    SpecializationCreate,
+    SpecializationUpdate
 )
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -14,6 +16,7 @@ from sqlalchemy import exc, or_, and_
 from validators.location import validate_location
 from validators.institution import validate_institution
 from validators.person.person import validate_create_person
+from validators.person.medicalPersonal import validate_medical_personal
 from cruds.person.person import delete_person
 
 
@@ -67,17 +70,7 @@ def create_medical_contract(db: Session, medical_institution: MedicalInstitution
 def update_MedicalPersonal(
     db: Session, medicalPersonal: MedicalPersonalUpdate, id: int
 ):
-    db_medicalPersonal = (
-        db.query(MedicalPersonal)
-        .filter(
-            and_(MedicalPersonal.id == id, MedicalPersonal.medical_personal_status == 1)
-        )
-        .first()
-    )
-    if not db_medicalPersonal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Medical Personal not found"
-        )
+    db_medicalPersonal = validate_medical_personal(db, id)
 
     if medicalPersonal.first_name:
         db_medicalPersonal.first_name = medicalPersonal.first_name
@@ -101,21 +94,7 @@ def update_MedicalPersonal(
 
 
 def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
-    db_medicalPersonal = (
-        db.query(MedicalPersonal)
-        .filter(
-            and_(
-                MedicalPersonal.id == medical_id,
-                MedicalPersonal.medical_personal_status == 1,
-            )
-        )
-        .first()
-    )
-
-    if not db_medicalPersonal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Medical Personal not found"
-        )
+    db_medicalPersonal = validate_medical_personal(db, medical_id)
 
     db_medicalInstitution = (
         db.query(MedicalInstitution)
@@ -143,16 +122,7 @@ def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
 
 
 def get_contracts(db: Session, id: int):
-    db_medicalPersonal = (
-        db.query(MedicalPersonal)
-        .filter(and_(MedicalPersonal.id == id, MedicalPersonal.status == 1))
-        .first()
-    )
-
-    if not db_medicalPersonal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Medical Personal not found"
-        )
+    db_medicalPersonal = validate_medical_personal(db, id)
 
     db_medicalInstitution = (
         db.query(MedicalInstitution)
@@ -165,3 +135,89 @@ def get_contracts(db: Session, id: int):
         .all()
     )
     return db_medicalInstitution
+
+def get_specializations(db: Session, id: int):
+    db_medicalPersonal = validate_medical_personal(db, id)
+
+    db_specializations = (
+        db.query(Specialization)
+        .filter(
+            and_(
+                Specialization.medical_personal_id == id,
+                Specialization.status == 1,
+            )
+        )
+        .all()
+    )
+    return db_specializations
+
+def add_specialization(db: Session, specialization: SpecializationCreate, medical_id: int):
+    db_medicalPersonal = validate_medical_personal(db, medical_id)
+    specialization = specialization.dict()
+    specialization["medical_personal_id"] = medical_id
+    db_specialization = Specialization(**specialization)
+    db.add(db_specialization)
+    db.commit()
+    db.refresh(db_specialization)
+    return db_specialization
+
+def update_specialization(db: Session, specialization_id : int, specialization: SpecializationUpdate, medical_id: int):
+    db_medicalPersonal = validate_medical_personal(db, medical_id)
+    db_specialization = (
+        db.query(Specialization)
+        .filter(
+            and_(
+                Specialization.medical_personal_id == medical_id,
+                Specialization.id == specialization_id,
+                Specialization.status == 1,
+            )
+        )
+        .first()
+    )
+
+    if not db_specialization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Specialization not found",
+        )
+
+    if specialization.specialization_name:
+        db_specialization.specialization_name = specialization.specialization_name
+    if specialization.degree:
+        db_specialization.degree = specialization.degree
+    if specialization.institution:
+        db_specialization.institution = specialization.institution
+    if specialization.start_date:
+        db_specialization.start_date = specialization.start_date
+    if specialization.end_date:
+        db_specialization.end_date = specialization.end_date
+    if specialization.location:
+        db_specialization.location = specialization.location
+    db.commit()
+    db.refresh(db_specialization)
+    return db_specialization
+
+def delete_specialization(db: Session, specialization_id : int, medical_id: int):
+    db_medicalPersonal = validate_medical_personal(db, medical_id)
+    db_specialization = (
+        db.query(Specialization)
+        .filter(
+            and_(
+                Specialization.medical_personal_id == medical_id,
+                Specialization.id == specialization_id,
+                Specialization.status == 1,
+            )
+        )
+        .first()
+    )
+
+    if not db_specialization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Specialization not found",
+        )
+
+    db_specialization.status = 0
+    db.commit()
+    db.refresh(db_specialization)
+    return {"detail": "Specialization deleted successfully"}

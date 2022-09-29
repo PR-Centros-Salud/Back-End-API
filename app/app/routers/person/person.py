@@ -20,6 +20,7 @@ async def read_users_me(db: Session = Depends(get_db), current_user: PersonGet =
         current_user = current_user.__dict__
         if current_user['discriminator'] == 'medical_personal':
             current_user['contracts'] = crud_medical.get_contracts(db, current_user['id'])
+            current_user['specializations'] = crud_medical.get_specializations(db, current_user['id'])
         del current_user['_password']
         return current_user
     else:

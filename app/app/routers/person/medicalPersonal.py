@@ -3,7 +3,7 @@ from cruds.person import medicalPersonal as crud_medicalPersonal
 from typing import Union
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate
+from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate
 from schemas.person.admin import AdminGet
 from schemas.person.person import PersonGet
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -34,3 +34,15 @@ async def delete_medical_personal(medical_id: int, institution_id: int, db: Sess
             raise HTTPException(status_code=403, detail="You don't have permission to delete this medical personal")
         else: 
             return crud_medicalPersonal.remove_medicalPersonal(db, medical_id, current_user.institution_id)
+
+@router.post("/add-specialization")
+async def add_specialization(specialization: SpecializationCreate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
+    return crud_medicalPersonal.add_specialization(db, specialization, current_user.id)
+
+@router.patch("/update-specialization/{specialization_id}")
+async def update_specialization(specialization_id : int, specialization: SpecializationUpdate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
+    return crud_medicalPersonal.update_specialization(db, specialization_id, specialization, current_user.id)
+
+@router.delete("/remove-specialization/{specialization_id}")
+async def remove_specialization(specialization_id : int, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
+    return crud_medicalPersonal.delete_specialization(db, specialization_id, current_user.id)
