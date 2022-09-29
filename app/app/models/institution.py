@@ -27,5 +27,4 @@ class Institution(BaseTable):
     # Relationships
     admin = relationship("Admin", back_populates="institution")
     province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
-    # medical_personal = relationship(
-    #     "MedicalInstution", back_populates="institution")
+    medical_institution = relationship("MedicalInstitution", back_populates="institution")

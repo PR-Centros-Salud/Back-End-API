@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from cruds.person import person as crud_person
+from cruds.person import person as crud_person, medicalPersonal as crud_medical
 from schemas.person.person import PersonCreate, PersonGet, PersonUpdatePassword
 from config.database import get_db
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token
@@ -18,6 +18,8 @@ router = APIRouter(
 async def read_users_me(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user:
         current_user = current_user.__dict__
+        if current_user['discriminator'] == 'medical_personal':
+            current_user['contracts'] = crud_medical.get_contracts(db, current_user['id'])
         del current_user['_password']
         return current_user
     else:

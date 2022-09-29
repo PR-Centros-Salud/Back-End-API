@@ -160,7 +160,7 @@ def get_current_admin(current_user=Depends(get_current_active_user)):
 
 def get_current_medical(current_user=Depends(get_current_active_user)):
     if (
-        current_user.discriminator != "doctor"
+        current_user.discriminator != "medical_personal"
         and current_user.discriminator != "superadmin"
     ):
         raise HTTPException(status_code=400, detail="Action not allowed")

@@ -25,9 +25,12 @@ async def update_medical_personal(medicalPersonal: MedicalPersonalUpdate, db: Se
     return crud_medicalPersonal.update_MedicalPersonal(db, medicalPersonal, current_user.id)
 
 
-@router.delete("/delete")
-async def delete_medical_personal(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_medical), q: Union[int, None] = None):
-    if q:
-        print(q)
-    print(current_user.__dict__)
-    # return crud_medicalPersonal.delete_medicalPersonal(db=db, id=current_user.id)
+@router.delete("/delete/{medical_id}")
+async def delete_medical_personal(medical_id: int, institution_id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "superadmin":
+        return crud_medicalPersonal.remove_medicalPersonal(db, medical_id, institution_id)
+    elif current_user.discriminator == "admin":
+        if current_user.institution_id != institution_id:
+            raise HTTPException(status_code=403, detail="You don't have permission to delete this medical personal")
+        else: 
+            return crud_medicalPersonal.remove_medicalPersonal(db, medical_id, current_user.institution_id)

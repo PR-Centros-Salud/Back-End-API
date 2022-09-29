@@ -11,25 +11,22 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Table, Date, SmallIn
 from sqlalchemy.orm import relationship
 from models.baseTable import BaseTable
 
-# class MedicalInstitution(Base):
-#     __tablename__ = "medical_institution"
+class MedicalInstitution(BaseTable):
+    __tablename__ = "medical_institution"
 
-#     # Relationships
-#     medical_personal_id = Column(Integer, ForeignKey(
-#         "medical_personal.id"), primary_key=True)
-#     institution_id = Column(Integer, ForeignKey(
-#         "institution.id"), primary_key=True)
-#     start_date = Column(Date, nullable=False)
-#     end_date = Column(Date, nullable=True)
-#     department = Column(String(50), nullable=False)
-#     role = Column(SmallInteger, nullable=False)
+    # Relationships
+    start_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    end_date = Column(DateTime, nullable=True)
+    department = Column(String(50), nullable=False)
+    role = Column(String(100), nullable=False)
 
-#     # Relationships
-#     medical_personal = relationship(
-#         "MedicalPersonal", back_populates="medical_institution")
-#     institution_id = relationship(
-#         "Institution", back_populates="medical_personal")
-
+    medical_personal_id = Column(Integer, ForeignKey(
+        "medical_personal.id"), nullable=False)
+    institution_id = Column(Integer, ForeignKey(
+        "institution.id"), nullable=False)
+    
+    institution = relationship("Institution", back_populates="medical_institution")
+    medical_personal = relationship("MedicalPersonal", back_populates="medical_institution")
 
 class MedicalPersonal(Person):
     __tablename__ = "medical_personal"
@@ -42,8 +39,8 @@ class MedicalPersonal(Person):
     medical_personal_status = Column(SmallInteger, default=1, nullable=False)
 
     # Relationships
-    # medical_institution = relationship(
-    #     "MedicalInstitution", back_populates="medical_personal")
+    medical_institution = relationship(
+        "MedicalInstitution", back_populates="medical_personal")
     experience = relationship(
         "Experience", back_populates="medical_personal")
     specialization = relationship(
