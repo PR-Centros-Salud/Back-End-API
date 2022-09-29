@@ -21,8 +21,8 @@ class Institution(BaseTable):
     phone = Column(String(20), nullable=False)
     photo_url = Column(String(150), nullable=True)
     institution_type = Column(SmallInteger, nullable=False)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
+    latitude = Column(Float(precision=32, decimal_return_scale=None), nullable=False)
+    longitude = Column(Float(precision=32, decimal_return_scale=None), nullable=False)
 
     # Relationships
     admin = relationship("Admin", back_populates="institution")

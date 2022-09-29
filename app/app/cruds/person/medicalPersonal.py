@@ -11,7 +11,10 @@ from cruds.person.person import delete_person
 def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     try:
         medicalPersonal = validate_create_person(db, medicalPersonal)
-        db_medicalPersonal = MedicalPersonal(**medicalPersonal.dict())
+        medicalPersonal = medicalPersonal.dict()
+        instution_id = medicalPersonal.pop("institution_id")
+        print(instution_id)
+        db_medicalPersonal = MedicalPersonal(**medicalPersonal)
         db.add(db_medicalPersonal)
         db.commit()
         db.refresh(db_medicalPersonal)
@@ -26,8 +29,9 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
 
 
 def update_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalUpdate, id: int):
+    print('sap')
     db_medicalPersonal = db.query(MedicalPersonal).filter(
-        and_(MedicalPersonal.id == id, MedicalPersonal.status == 1)).first()
+        and_(MedicalPersonal.id == id, MedicalPersonal.medical_personal_status == 1)).first()
     if not db_medicalPersonal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

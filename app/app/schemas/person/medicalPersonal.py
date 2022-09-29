@@ -6,7 +6,7 @@ from schemas.person.person import PersonCreate, PersonGet, PersonUpdate, PersonU
 
 class MedicalPersonalCreate(PersonCreate):
     """MedicalPersonalCreate Schema"""
-    # Add your fields here
+    institution_id: int = Field(..., description="Institution id of the medicalPersonal")
     pass
 
 
