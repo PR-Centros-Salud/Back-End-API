@@ -1,4 +1,5 @@
 # Library Importation
+from fastapi import HTTPException, status
 from models.person.person import Person
 from schemas.person.person import PersonCreate, PersonGet, PersonUpdatePassword
 

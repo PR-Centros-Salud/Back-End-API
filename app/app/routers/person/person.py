@@ -17,6 +17,8 @@ router = APIRouter(
 @router.get("/me")
 async def read_users_me(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user:
+        current_user = current_user.__dict__
+        del current_user['_password']
         return current_user
     else:
         raise HTTPException(status_code=400, detail="User not found")

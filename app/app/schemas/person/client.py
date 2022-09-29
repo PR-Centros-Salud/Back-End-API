@@ -7,12 +7,16 @@ from schemas.person.person import PersonCreate, PersonGet, PersonUpdate, PersonU
 class ClientCreate(PersonCreate):
     """ClientCreate Schema"""
     # Add your fields here
+    lat : float = Field(..., description="Latitude of the client")
+    lng : float = Field(..., description="Longitude of the client")
     pass
 
 
 class ClientGet(PersonGet):
     """ClientGet Schema"""
     # Add your fields here
+    lat : float
+    lng : float
     pass
 
 
