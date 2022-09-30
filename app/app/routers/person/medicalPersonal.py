@@ -3,12 +3,13 @@ from cruds.person import medicalPersonal as crud_medicalPersonal
 from typing import Union
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate
+from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, MedicalInstitutionCreate
 from schemas.person.admin import AdminGet
 from schemas.person.person import PersonGet
+from validators.person.medicalPersonal import validate_medical_personal, validate_medical_institution
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token, get_current_admin, get_current_medical
-
+from fastapi import HTTPException, status
 router = APIRouter(
     prefix="/medicalPersonal",
     tags=["MedicalPersonal"]
@@ -26,14 +27,23 @@ async def update_medical_personal(medicalPersonal: MedicalPersonalUpdate, db: Se
 
 
 @router.delete("/delete/{medical_id}")
-async def delete_medical_personal(medical_id: int, institution_id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
-    if current_user.discriminator == "superadmin":
-        return crud_medicalPersonal.remove_medicalPersonal(db, medical_id, institution_id)
-    elif current_user.discriminator == "admin":
-        if current_user.institution_id != institution_id:
-            raise HTTPException(status_code=403, detail="You don't have permission to delete this medical personal")
-        else: 
+async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
             return crud_medicalPersonal.remove_medicalPersonal(db, medical_id, current_user.institution_id)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You are not an admin"
+        )
+
+@router.post("/add-contract")
+async def add_contract(medical_institution: MedicalInstitutionCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "superadmin":
+        raise HTTPException(status_code=403, detail="You don't have permission to add contract")
+    else:
+        medical_institution = medical_institution.dict()
+        medical_institution["institution_id"] = current_user.institution_id
+        if validate_medical_institution(db, medical_institution["medical_personal_id"], current_user.institution_id):
+            return crud_medicalPersonal.create_medical_contract(db, medical_institution)
 
 @router.post("/add-specialization")
 async def add_specialization(specialization: SpecializationCreate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):

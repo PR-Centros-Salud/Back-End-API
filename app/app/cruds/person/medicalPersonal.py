@@ -120,6 +120,15 @@ def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
     db.refresh(db_medicalInstitution)
     return {"detail": "Medical Personal removed successfully"}
 
+# def add_contract(db: Session, medical_institution: MedicalInstitutionCreate, medical_id: int):
+#     db_medicalPersonal = validate_medical_personal(db, medical_id)
+#     medical_institution = medical_institution.dict()
+#     medical_institution["medical_personal_id"] = medical_id
+#     db_medical_institution = MedicalInstitution(**medical_institution)
+#     db.add(db_medical_institution)
+#     db.commit()
+#     db.refresh(db_medical_institution)
+#     return db_medical_institution
 
 def get_contracts(db: Session, id: int):
     db_medicalPersonal = validate_medical_personal(db, id)

@@ -26,7 +26,7 @@ class MedicalInstitutionCreate(BaseModel):
     """MedicalInstitution Schema"""
     department : str = Field(..., description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
-    institution_id: int = Field(..., description="Institution id of the medicalPersonal")
+    institution_id: int = Field(None, description="Institution id of the medicalPersonal")
     medical_personal_id: int = Field(..., description="Medical personal id of the medicalPersonal")
 
 class SpecializationCreate(BaseModel):
