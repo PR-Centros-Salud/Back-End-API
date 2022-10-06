@@ -49,7 +49,7 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
 
 def create_medical_contract(db: Session, contract: ContractCreate):
     try:
-        if validate_institution(db, contract["institution_id"]):
+        if validate_institution(db, contract["institution_id"]) != None:
             db_contract = Contract(**contract)
             db.add(db_contract)
             db.commit()

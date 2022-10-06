@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from cruds import institution as crud_institution
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate
+from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate, RoomCreate, RoomGet
 from config.oauth2 import get_current_super_admin, get_current_admin
 from schemas.person.superadmin import SuperAdminGet
 from schemas.person.person import PersonGet
@@ -42,3 +42,20 @@ async def update_institution(institution: InstitutionUpdate, id: int, db: Sessio
 @router.delete("/delete/{id}", response_model=InstitutionGet)
 async def delete_institution(id: int, db: Session = Depends(get_db), current_user: SuperAdminGet = Depends(get_current_super_admin)):
     return crud_institution.delete_institution(db=db, id=id)
+
+# Rooms
+@router.post("/room/create", response_model=RoomGet)
+async def create_room(room: RoomCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
+        room.institution_id = current_user.institution_id
+    return crud_institution.add_institution_room(db=db, room_create=room)
+        
+@router.get("/room/{id}", response_model=list[RoomGet])
+async def get_rooms(id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
+        if current_user.institution_id != id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to view this institution"
+            )
+    return crud_institution.get_institution_rooms(db=db, institution_id=id)

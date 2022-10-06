@@ -10,6 +10,10 @@ class InstitutionType(IntEnum):
     pharmacy = 3
     laboratory = 4
 
+class RoomType(IntEnum):
+    consultory = 1
+    laboratory = 2
+
 class InstitutionCreate(BaseModel):
     name: str = Field(..., description="Name of the institution",
                       max_length=100)
@@ -64,3 +68,28 @@ class InstitutionUpdate(BaseModel):
 
     class Config:
         orm_mode = True
+
+class RoomCreate(BaseModel):
+    room_type: RoomType = Field(..., description="Type of the room")
+    room_number: str = Field(..., description="Number of the room",
+                             max_length=10)
+    room_floor: Optional[str] = Field(
+        None, description="Floor of the room", max_length=10)
+    room_block: Optional[str] = Field(
+        None, description="Block of the room", max_length=10)
+    institution_id: Optional[int] = Field(None, description="Institution id of the room")
+
+    class Config:
+        orm_mode = True
+
+class RoomGet(BaseModel):
+    id: int
+    room_type: RoomType
+    room_number: str
+    room_floor: Optional[str] = None
+    room_block: Optional[str] = None
+    institution_id: int
+
+    class Config:
+        orm_mode = True
+

@@ -6,5 +6,5 @@ from sqlalchemy.orm import Session
 
 def validate_create_admin(db: Session, admin: admin_schema.AdminCreate):
     valid_person = validate_create_person(db, admin)
-    if validate_institution(db, admin.institution_id):
+    if validate_institution(db, admin.institution_id) != None:
         return valid_person

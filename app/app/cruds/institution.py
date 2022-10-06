@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
-from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate
-from validators.institution import validate_create_institution
-from models.institution import Institution
+from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate, RoomCreate
+from validators.institution import validate_create_institution, validate_institution, validate_create_room
+from models.institution import Institution, Room
 from models.person.medicalPersonal import Contract
+from models.person.admin import Admin
+from models.person.person import Person
 from datetime import datetime
 
 def get_all_institutions(db: Session):
@@ -31,13 +33,7 @@ def create_institution(db: Session, institution: InstitutionCreate):
 
 
 def update_institution(db: Session, institution: InstitutionUpdate, id: int):
-    db_institution = db.query(Institution).filter(
-        and_(Institution.id == id, Institution.status == 1)).first()
-    if not db_institution:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Institution not found"
-        )
+    db_institution = validate_institution(db, id)
 
     if (institution.name):
         db_institution.name = institution.name
@@ -59,6 +55,9 @@ def update_institution(db: Session, institution: InstitutionUpdate, id: int):
 
 
 def delete_institution(db: Session, id: int):
+    # if validate_institution(db, id):
+        
+
     db_institution = db.query(Institution).filter(
         and_(Institution.id == id, Institution.status == 1)).first()
     if not db_institution:
@@ -75,6 +74,30 @@ def delete_institution(db: Session, id: int):
         contract.status = 0
         contract.end_date = datetime.now()
 
+    db_admin = db.query(Admin).filter(
+        and_(Admin.institution_id == id, Admin.status == 1)).all()
+    for admin in db_admin:
+        db_person = db.query(Person).filter(
+            and_(Person.id == admin.id, Person.status == 1)).first()
+        db_person.status = 0
+        admin.admin_status = 0
+
+
     db.commit()
     db.refresh(db_institution)
     return db_institution
+
+def add_institution_room(db: Session, room_create: RoomCreate):
+    db_institution = validate_institution(db, room_create.institution_id)
+    if validate_create_room(db, room_create):
+        room = room_create.dict()
+        room["room_type"] = room["room_type"].value
+        db_room = Room(**room)
+        db.add(db_room)
+        db.commit()
+        db.refresh(db_room)
+        return db_room
+
+def get_institution_rooms(db: Session, institution_id: int):
+    db_institution = validate_institution(db, institution_id)
+    return db.query(Room).filter(and_(Room.institution_id == institution_id, Room.status == 1)).all()

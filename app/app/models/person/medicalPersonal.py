@@ -27,7 +27,7 @@ class Contract(BaseTable):
     # Relationships
     start_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     end_date = Column(DateTime, nullable=True)
-    department = Column(String(50), nullable=False)
+    department = Column(String(50), nullable=True)
     role = Column(String(100), nullable=False)
 
     medical_personal_id = Column(
