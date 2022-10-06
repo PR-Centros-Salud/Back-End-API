@@ -1,14 +1,14 @@
 from models.person.medicalPersonal import MedicalPersonal, Specialization
 from datetime import datetime
 from models.person.person import Person
-from models.person.medicalPersonal import MedicalInstitution
+from models.person.medicalPersonal import Contract
 from schemas.person.medicalPersonal import (
     MedicalPersonalCreate,
     MedicalPersonalGet,
     MedicalPersonalUpdate,
-    MedicalInstitutionCreate,
+    ContractCreate,
     SpecializationCreate,
-    SpecializationUpdate
+    SpecializationUpdate,
 )
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -25,18 +25,18 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
         medicalPersonal = validate_create_person(db, medicalPersonal)
         medicalPersonal = medicalPersonal.dict()
 
-        medicalInstitution = dict()
-        medicalInstitution["institution_id"] = medicalPersonal.pop("institution_id")
-        validate_institution(db, medicalInstitution["institution_id"])
+        contract = dict()
+        contract["institution_id"] = medicalPersonal.pop("institution_id")
+        validate_institution(db, contract["institution_id"])
 
-        medicalInstitution["department"] = medicalPersonal.pop("department")
-        medicalInstitution["role"] = medicalPersonal.pop("role")
+        contract["department"] = medicalPersonal.pop("department")
+        contract["role"] = medicalPersonal.pop("role")
         db_medicalPersonal = MedicalPersonal(**medicalPersonal)
         db.add(db_medicalPersonal)
         db.commit()
         db.refresh(db_medicalPersonal)
-        medicalInstitution["medical_personal_id"] = db_medicalPersonal.id
-        create_medical_contract(db, medicalInstitution)
+        contract["medical_personal_id"] = db_medicalPersonal.id
+        create_medical_contract(db, contract)
 
     except exc.SQLAlchemyError as e:
         print(e)
@@ -47,13 +47,13 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     return db_medicalPersonal
 
 
-def create_medical_contract(db: Session, medical_institution: MedicalInstitutionCreate):
+def create_medical_contract(db: Session, contract: ContractCreate):
     try:
-        if validate_institution(db, medical_institution["institution_id"]):
-            db_medical_institution = MedicalInstitution(**medical_institution)
-            db.add(db_medical_institution)
+        if validate_institution(db, contract["institution_id"]):
+            db_contract = Contract(**contract)
+            db.add(db_contract)
             db.commit()
-            db.refresh(db_medical_institution)
+            db.refresh(db_contract)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Institution not found"
@@ -64,7 +64,7 @@ def create_medical_contract(db: Session, medical_institution: MedicalInstitution
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Institution error."
         )
-    return db_medical_institution
+    return db_contract
 
 
 def update_MedicalPersonal(
@@ -96,54 +96,46 @@ def update_MedicalPersonal(
 def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
 
-    db_medicalInstitution = (
-        db.query(MedicalInstitution)
+    db_contract = (
+        db.query(Contract)
         .filter(
             and_(
-                MedicalInstitution.medical_personal_id == medical_id,
-                MedicalInstitution.institution_id == institution_id,
-                MedicalInstitution.status == 1,
+                Contract.medical_personal_id == medical_id,
+                Contract.institution_id == institution_id,
+                Contract.status == 1,
             )
         )
         .first()
     )
 
-    if not db_medicalInstitution:
+    if not db_contract:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Medical Personal in Institution not found",
         )
 
-    db_medicalInstitution.status = 0
-    db_medicalInstitution.end_date = datetime.utcnow()
+    db_contract.status = 0
+    db_contract.end_date = datetime.utcnow()
     db.commit()
-    db.refresh(db_medicalInstitution)
+    db.refresh(db_contract)
     return {"detail": "Medical Personal removed successfully"}
 
-# def add_contract(db: Session, medical_institution: MedicalInstitutionCreate, medical_id: int):
-#     db_medicalPersonal = validate_medical_personal(db, medical_id)
-#     medical_institution = medical_institution.dict()
-#     medical_institution["medical_personal_id"] = medical_id
-#     db_medical_institution = MedicalInstitution(**medical_institution)
-#     db.add(db_medical_institution)
-#     db.commit()
-#     db.refresh(db_medical_institution)
-#     return db_medical_institution
 
 def get_contracts(db: Session, id: int):
     db_medicalPersonal = validate_medical_personal(db, id)
 
-    db_medicalInstitution = (
-        db.query(MedicalInstitution)
+    db_contract = (
+        db.query(Contract)
         .filter(
             and_(
-                MedicalInstitution.medical_personal_id == id,
-                MedicalInstitution.status == 1,
+                Contract.medical_personal_id == id,
+                Contract.status == 1,
             )
         )
         .all()
     )
-    return db_medicalInstitution
+    return db_contract
+
 
 def get_specializations(db: Session, id: int):
     db_medicalPersonal = validate_medical_personal(db, id)
@@ -160,7 +152,10 @@ def get_specializations(db: Session, id: int):
     )
     return db_specializations
 
-def add_specialization(db: Session, specialization: SpecializationCreate, medical_id: int):
+
+def add_specialization(
+    db: Session, specialization: SpecializationCreate, medical_id: int
+):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
     specialization = specialization.dict()
     specialization["medical_personal_id"] = medical_id
@@ -170,7 +165,13 @@ def add_specialization(db: Session, specialization: SpecializationCreate, medica
     db.refresh(db_specialization)
     return db_specialization
 
-def update_specialization(db: Session, specialization_id : int, specialization: SpecializationUpdate, medical_id: int):
+
+def update_specialization(
+    db: Session,
+    specialization_id: int,
+    specialization: SpecializationUpdate,
+    medical_id: int,
+):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
     db_specialization = (
         db.query(Specialization)
@@ -206,7 +207,8 @@ def update_specialization(db: Session, specialization_id : int, specialization: 
     db.refresh(db_specialization)
     return db_specialization
 
-def delete_specialization(db: Session, specialization_id : int, medical_id: int):
+
+def delete_specialization(db: Session, specialization_id: int, medical_id: int):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
     db_specialization = (
         db.query(Specialization)

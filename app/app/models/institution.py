@@ -6,10 +6,17 @@ from email.policy import default
 from config.database import Base
 
 # SQLAlchemy
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, SmallInteger, Float
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    SmallInteger,
+    Float,
+)
 from sqlalchemy.orm import relationship
 from schemas.institution import InstitutionType
-# from models.person.medicalPersonal import MedicalInstitution
 
 
 class Institution(BaseTable):
@@ -27,4 +34,4 @@ class Institution(BaseTable):
     # Relationships
     admin = relationship("Admin", back_populates="institution")
     province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
-    medical_institution = relationship("MedicalInstitution", back_populates="institution")
+    contract = relationship("Contract", back_populates="institution")

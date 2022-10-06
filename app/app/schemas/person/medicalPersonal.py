@@ -22,8 +22,8 @@ class MedicalPersonalUpdate(PersonUpdate):
     # Add your fields here
     pass
 
-class MedicalInstitutionCreate(BaseModel):
-    """MedicalInstitution Schema"""
+class ContractCreate(BaseModel):
+    """ContractCreate Schema"""
     department : str = Field(..., description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
     institution_id: int = Field(None, description="Institution id of the medicalPersonal")

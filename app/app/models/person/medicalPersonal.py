@@ -21,8 +21,8 @@ from sqlalchemy.orm import relationship
 from models.baseTable import BaseTable
 
 
-class MedicalInstitution(BaseTable):
-    __tablename__ = "medical_institution"
+class Contract(BaseTable):
+    __tablename__ = "contract"
 
     # Relationships
     start_date = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -35,9 +35,9 @@ class MedicalInstitution(BaseTable):
     )
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
 
-    institution = relationship("Institution", back_populates="medical_institution")
+    institution = relationship("Institution", back_populates="contract")
     medical_personal = relationship(
-        "MedicalPersonal", back_populates="medical_institution"
+        "MedicalPersonal", back_populates="contract"
     )
 
 
@@ -55,8 +55,8 @@ class MedicalPersonal(Person):
     medical_personal_status = Column(SmallInteger, default=1, nullable=False)
 
     # Relationships
-    medical_institution = relationship(
-        "MedicalInstitution", back_populates="medical_personal"
+    contract = relationship(
+        "Contract", back_populates="medical_personal"
     )
     specialization = relationship("Specialization", back_populates="medical_personal")
 

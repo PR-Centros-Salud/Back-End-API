@@ -5,9 +5,10 @@ from enum import IntEnum
 
 
 class InstitutionType(IntEnum):
-    hospital = 1
-    clinic = 2
-
+    health_center = 1
+    consultory = 2
+    pharmacy = 3
+    laboratory = 4
 
 class InstitutionCreate(BaseModel):
     name: str = Field(..., description="Name of the institution",

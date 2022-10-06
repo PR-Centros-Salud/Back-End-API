@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.person.medicalPersonal import MedicalPersonal, MedicalInstitution
+from models.person.medicalPersonal import MedicalPersonal, Contract
 from sqlalchemy import or_, and_
 from fastapi import HTTPException, status
 
@@ -22,21 +22,21 @@ def validate_medical_personal(db: Session, medical_id : int):
     else:
         return db_medicalPersonal
 
-def validate_medical_institution(db: Session, medical_id: int, institution_id : int) -> bool:
+def validate_contract(db: Session, medical_id: int, institution_id : int) -> bool:
     db_medicalPersonal = validate_medical_personal(db, medical_id)
-    db_medicalInstitution = (
-        db.query(MedicalInstitution)
+    db_contract = (
+        db.query(Contract)
         .filter(
             and_(
-                MedicalInstitution.medical_personal_id == medical_id,
-                MedicalInstitution.institution_id == institution_id,
-                MedicalInstitution.status == 1,
+                Contract.medical_personal_id == medical_id,
+                Contract.institution_id == institution_id,
+                Contract.status == 1,
             )
         )
         .first()
     )
 
-    if db_medicalInstitution:
+    if db_contract:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Active contract already exists",

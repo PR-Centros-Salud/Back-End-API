@@ -4,6 +4,8 @@ from sqlalchemy import exc, or_, and_
 from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate
 from validators.institution import validate_create_institution
 from models.institution import Institution
+from models.person.medicalPersonal import Contract
+from datetime import datetime
 
 def get_all_institutions(db: Session):
     return db.query(Institution).filter(Institution.status == 1).all()
@@ -66,6 +68,13 @@ def delete_institution(db: Session, id: int):
         )
 
     db_institution.status = 0
+
+    db_contract = db.query(Contract).filter(
+        and_(Contract.institution_id == id, Contract.status == 1)).all()
+    for contract in db_contract:
+        contract.status = 0
+        contract.end_date = datetime.now()
+
     db.commit()
     db.refresh(db_institution)
     return db_institution
