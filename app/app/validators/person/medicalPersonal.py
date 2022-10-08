@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.person.medicalPersonal import MedicalPersonal, Contract
+from models.person.medicalPersonal import MedicalPersonal, Contract, ScheduleDay
 from sqlalchemy import or_, and_
 from fastapi import HTTPException, status
 
@@ -40,6 +40,27 @@ def validate_contract(db: Session, medical_id: int, institution_id : int) -> boo
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Active contract already exists",
+        )
+    else:
+        return True
+
+def validate_schedule_day(db: Session, day: int, room_id: int) -> bool:
+    db_schedule = (
+        db.query(ScheduleDay)
+        .filter(
+            and_(
+                ScheduleDay.room_id == room_id,
+                ScheduleDay.day == day,
+                ScheduleDay.status == 1,
+            )
+        )
+        .first()
+    )
+
+    if db_schedule:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Schedule already exists",
         )
     else:
         return True

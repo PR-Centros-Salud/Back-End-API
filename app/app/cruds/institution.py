@@ -55,16 +55,7 @@ def update_institution(db: Session, institution: InstitutionUpdate, id: int):
 
 
 def delete_institution(db: Session, id: int):
-    # if validate_institution(db, id):
-        
-
-    db_institution = db.query(Institution).filter(
-        and_(Institution.id == id, Institution.status == 1)).first()
-    if not db_institution:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Institution not found"
-        )
+    db_institution = validate_institution(db, id)
 
     db_institution.status = 0
 
@@ -82,6 +73,10 @@ def delete_institution(db: Session, id: int):
         db_person.status = 0
         admin.admin_status = 0
 
+    db_rooms = db.query(Room).filter(
+        and_(Room.institution_id == id, Room.status == 1)).all()
+    for room in db_rooms:
+        room.status = 0
 
     db.commit()
     db.refresh(db_institution)

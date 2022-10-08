@@ -1,7 +1,7 @@
 from models.person.medicalPersonal import MedicalPersonal, Specialization
 from datetime import datetime
 from models.person.person import Person
-from models.person.medicalPersonal import Contract
+from models.person.medicalPersonal import Contract, Schedule, ScheduleDay
 from schemas.person.medicalPersonal import (
     MedicalPersonalCreate,
     MedicalPersonalGet,
@@ -16,7 +16,11 @@ from sqlalchemy import exc, or_, and_
 from validators.location import validate_location
 from validators.institution import validate_institution
 from validators.person.person import validate_create_person
-from validators.person.medicalPersonal import validate_medical_personal
+from validators.person.medicalPersonal import (
+    validate_medical_personal,
+    validate_contract,
+    validate_schedule_day
+)
 from cruds.person.person import delete_person
 
 
@@ -31,6 +35,7 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
 
         contract["department"] = medicalPersonal.pop("department")
         contract["role"] = medicalPersonal.pop("role")
+        contract["schedule"] = medicalPersonal.pop("schedule")
         db_medicalPersonal = MedicalPersonal(**medicalPersonal)
         db.add(db_medicalPersonal)
         db.commit()
@@ -49,20 +54,40 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
 
 def create_medical_contract(db: Session, contract: ContractCreate):
     try:
-        if validate_institution(db, contract["institution_id"]) != None:
-            db_contract = Contract(**contract)
-            db.add(db_contract)
-            db.commit()
-            db.refresh(db_contract)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Institution not found"
-            )
+        db_instiution = validate_institution(db, contract["institution_id"])
+        if db_instiution != None:
+            if(db_instiution.institution_type != 3):
+                schedule_day_list = contract["schedule"].pop("schedule_day_list")
+
+                db_schedule = Schedule(**contract["schedule"])
+                db.add(db_schedule)
+                db.commit()
+                db.refresh(db_schedule)
+
+                for schedule_day in schedule_day_list:
+                    schedule_day["day"] = schedule_day["day"].value
+                    validate_schedule_day(db, schedule_day["day"], schedule_day["room_id"])
+
+                    schedule_day["schedule_id"] = db_schedule.id
+                    db_schedule_day = ScheduleDay(**schedule_day)
+                    db.add(db_schedule_day)
+                    db.commit()
+                    db.refresh(db_schedule_day)
+
+                db_contract = Contract(**contract)
+                db.add(db_contract)
+                db.commit()
+                db.refresh(db_contract)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Institution is not a hospital",
+                )
     except exc.SQLAlchemyError as e:
         print(e)
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Institution error."
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Contract error."
         )
     return db_contract
 

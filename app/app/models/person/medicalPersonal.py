@@ -16,6 +16,7 @@ from sqlalchemy import (
     Date,
     SmallInteger,
     DateTime,
+    Time
 )
 from sqlalchemy.orm import relationship
 from models.baseTable import BaseTable
@@ -33,12 +34,16 @@ class Contract(BaseTable):
     medical_personal_id = Column(
         Integer, ForeignKey("medical_personal.id"), nullable=False
     )
-    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
-
-    institution = relationship("Institution", back_populates="contract")
     medical_personal = relationship(
         "MedicalPersonal", back_populates="contract"
     )
+
+    institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    institution = relationship("Institution", back_populates="contract")
+
+    schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
+    schedule = relationship("Schedule", back_populates="contract")
+    
 
 
 class MedicalPersonal(Person):
@@ -74,3 +79,28 @@ class Specialization(BaseTable):
     # Relationships
     medical_personal_id = Column(Integer, ForeignKey("medical_personal.id"))
     medical_personal = relationship("MedicalPersonal", back_populates="specialization")
+
+class Schedule(BaseTable):
+    __tablename__ = "schedule"
+
+    estimated_appointment_time = Column(Integer, nullable=False)
+
+    # Relationships
+    schedule_day = relationship("ScheduleDay", back_populates="schedule")
+    contract = relationship("Contract", back_populates="schedule", uselist=False)
+
+class ScheduleDay(BaseTable):
+    __tablename__ = "schedule_day"
+
+    day = Column(SmallInteger, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+
+    # Relationships
+    schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
+    schedule = relationship("Schedule", back_populates="schedule_day")
+
+    room_id = Column(Integer, ForeignKey("room.id"), nullable=False)
+    room = relationship("Room", back_populates="schedule_day")
+
+    

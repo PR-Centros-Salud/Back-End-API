@@ -49,3 +49,5 @@ class Room(BaseTable):
     # Relationships
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
     institution = relationship("Institution", back_populates="room")
+
+    schedule_day = relationship("ScheduleDay", back_populates="room")

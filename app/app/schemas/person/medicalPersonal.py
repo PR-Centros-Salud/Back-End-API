@@ -1,16 +1,42 @@
 from pydantic import validator, Field, EmailStr, BaseModel
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, date, time
 from schemas.person.person import PersonCreate, PersonGet, PersonUpdate, PersonUpdatePassword
+from enum import IntEnum
 
+class Day(IntEnum):
+    monday = 1
+    tuesday = 2
+    wednesday = 3
+    thursday = 4
+    friday = 5
+    saturday = 6
+    sunday = 7
+
+
+
+class ScheduleDayCreate(BaseModel):
+    """ScheduleDayCreate Schema"""
+    day : Day = Field(..., description="Day of the schedule")
+    start_time: time = Field(..., description="Start time of the schedule")
+    end_time: time = Field(..., description="End time of the schedule")
+    room_id: int = Field(..., description="Room id of the schedule")
+
+    class Config: 
+        orm_mode = True
+
+class ScheduleCreate(BaseModel):
+    """ScheduleCreate Schema"""
+    estimated_appointment_time : int = Field(..., description="Estimated appointment time of the medicalPersonal")
+    schedule_day_list : list[ScheduleDayCreate] = Field(..., description="Schedule day list of the medicalPersonal")
 
 class MedicalPersonalCreate(PersonCreate):
     """MedicalPersonalCreate Schema"""
     institution_id: int = Field(..., description="Institution id of the medicalPersonal")
     department : str = Field(None, description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
-
-
+    schedule : ScheduleCreate = Field(..., description="Schedule of the medicalPersonal")
+    
 class MedicalPersonalGet(PersonGet):
     """MedicalPersonalGet Schema"""
     # Add your fields here
@@ -28,6 +54,8 @@ class ContractCreate(BaseModel):
     role : str = Field(..., description="Role of the medicalPersonal")
     institution_id: int = Field(None, description="Institution id of the medicalPersonal")
     medical_personal_id: int = Field(..., description="Medical personal id of the medicalPersonal")
+    schedule : ScheduleCreate = Field(..., description="Schedule of the medicalPersonal")
+
 
 class SpecializationCreate(BaseModel):
     """SpecializationCreate Schema"""
