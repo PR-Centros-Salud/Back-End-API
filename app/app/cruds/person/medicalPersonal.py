@@ -19,13 +19,15 @@ from validators.person.person import validate_create_person
 from validators.person.medicalPersonal import (
     validate_medical_personal,
     validate_contract,
-    validate_schedule_day
+    validate_schedule_day,
+    validate_schedule
 )
 from cruds.person.person import delete_person
 
 
 def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     try:
+        validate_schedule(db, medicalPersonal.institution_id, medicalPersonal.schedule.schedule_day_list)
         medicalPersonal = validate_create_person(db, medicalPersonal)
         medicalPersonal = medicalPersonal.dict()
 
@@ -54,26 +56,23 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
 
 def create_medical_contract(db: Session, contract: ContractCreate):
     try:
-        db_instiution = validate_institution(db, contract["institution_id"])
-        if db_instiution != None:
-            if(db_instiution.institution_type != 3):
+        db_institution = validate_institution(db, contract["institution_id"])
+        if db_institution != None:
+            if(db_institution.institution_type != 3):
                 schedule_day_list = contract["schedule"].pop("schedule_day_list")
 
-                db_schedule = Schedule(**contract["schedule"])
+                db_schedule = Schedule(**contract.pop("schedule"))
                 db.add(db_schedule)
                 db.commit()
                 db.refresh(db_schedule)
 
                 for schedule_day in schedule_day_list:
                     schedule_day["day"] = schedule_day["day"].value
-                    validate_schedule_day(db, schedule_day["day"], schedule_day["room_id"])
-
                     schedule_day["schedule_id"] = db_schedule.id
                     db_schedule_day = ScheduleDay(**schedule_day)
                     db.add(db_schedule_day)
-                    db.commit()
-                    db.refresh(db_schedule_day)
-
+        
+                contract["schedule_id"] = db_schedule.id
                 db_contract = Contract(**contract)
                 db.add(db_contract)
                 db.commit()
@@ -81,7 +80,7 @@ def create_medical_contract(db: Session, contract: ContractCreate):
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Institution is not a hospital",
+                    detail="Institution is not valid for this operation.",
                 )
     except exc.SQLAlchemyError as e:
         print(e)

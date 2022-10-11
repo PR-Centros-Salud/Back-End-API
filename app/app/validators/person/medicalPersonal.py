@@ -44,7 +44,13 @@ def validate_contract(db: Session, medical_id: int, institution_id : int) -> boo
     else:
         return True
 
-def validate_schedule_day(db: Session, day: int, room_id: int) -> bool:
+
+def validate_schedule(db: Session, institution_id: int, schedule_day_list: list) -> bool:
+    for schedule_day in schedule_day_list:
+        validate_schedule_day(db, schedule_day.day, schedule_day.room_id, institution_id)
+    return True
+
+def validate_schedule_day(db: Session, day: int, room_id: int, institution_id: bool) -> bool:
     db_schedule = (
         db.query(ScheduleDay)
         .filter(
@@ -63,4 +69,22 @@ def validate_schedule_day(db: Session, day: int, room_id: int) -> bool:
             detail="Schedule already exists",
         )
     else:
+        db_room = (
+            db.query(Room)
+            .filter(
+                and_(
+                    Room.id == room_id,
+                    Room.status == 1,
+                    Room.institution_id == institution_id,
+                )
+            )
+            .first()
+        )
+
+        if not db_room:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Room not found",
+            )
+
         return True
