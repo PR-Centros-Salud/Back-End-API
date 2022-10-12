@@ -4,7 +4,6 @@ from config.database import Base
 # SQLAlchemy
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from models.location import Institution
 from models.baseTable import BaseTable
 
 

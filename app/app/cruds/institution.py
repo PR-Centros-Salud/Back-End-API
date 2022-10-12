@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
 from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate, RoomCreate
+from schemas.laboratoryService import LaboratoryServiceCreate, LaboratoryServiceGet, LaboratoryServiceUpdate
 from validators.institution import validate_create_institution, validate_institution, validate_create_room
+from validators.laboratoryService import validate_laboratory
+from models.laboratoryService import LaboratoryService
 from models.institution import Institution, Room
 from models.person.medicalPersonal import Contract
 from models.person.admin import Admin
@@ -96,3 +99,19 @@ def add_institution_room(db: Session, room_create: RoomCreate):
 def get_institution_rooms(db: Session, institution_id: int):
     db_institution = validate_institution(db, institution_id)
     return db.query(Room).filter(and_(Room.institution_id == institution_id, Room.status == 1)).all()
+
+def add_institution_laboratory(db: Session, laboratory_create: LaboratoryServiceCreate):
+    if validate_laboratory(db, laboratory_create):
+        laboratory = laboratory_create.dict()
+        db_laboratory = LaboratoryService(**laboratory)
+        db.add(db_laboratory)
+        db.commit()
+        db.refresh(db_laboratory)
+        return db_laboratory
+
+def get_institution_laboratories(db: Session, institution_id: int):
+    db_institution = validate_institution(db, institution_id)
+    return db.query(LaboratoryService).filter(and_(LaboratoryService.institution_id == institution_id, LaboratoryService.status == 1)).all()
+
+def get_laboratories_by_name(db: Session, name: str):
+    return db.query(LaboratoryService).filter(and_(LaboratoryService.laboratory_service_name == name, LaboratoryService.status == 1)).all()

@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, ContractCreate
 from schemas.person.admin import AdminGet
 from schemas.person.person import PersonGet
-from validators.person.medicalPersonal import validate_medical_personal, validate_contract
+from validators.person.medicalPersonal import validate_medical_personal, validate_contract, validate_schedule
+from validators.institution import validate_institution
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token, get_current_admin, get_current_medical
 from fastapi import HTTPException, status
+
 router = APIRouter(
     prefix="/medicalPersonal",
     tags=["MedicalPersonal"]
@@ -18,6 +20,9 @@ router = APIRouter(
 
 @router.post("/create", response_model=MedicalPersonalGet)
 async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Session = Depends(get_db), current_user : AdminGet = Depends(get_current_admin)):
+    institution = validate_institution(db, medicalPersonal.institution_id)
+    if institution.institution_type not in [1,2,4]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
     return crud_medicalPersonal.create_MedicalPersonal(db, medicalPersonal)
 
 
@@ -37,16 +42,28 @@ async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db)
 
 @router.post("/add-contract")
 async def add_contract(contract: ContractCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    contract = contract.dict()
     if current_user.discriminator == "superadmin":
-        contract = contract.dict()
+        institution = validate_institution(db, contract["institution_id"])
+
+        if institution.institution_type not in [1,2,4]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+
         if validate_contract(db, contract["medical_personal_id"], contract["institution_id"]):
-            return crud_medicalPersonal.create_medical_contract(db, contract)
+            if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
+                return crud_medicalPersonal.create_medical_contract(db, contract)
         raise HTTPException(status_code=403, detail="You don't have permission to add contract")
     else:
-        contract = contract.dict()
         contract["institution_id"] = current_user.institution_id
+        institution = validate_institution(db, contract["institution_id"])
+
+        if institution.institution_type not in [1,2,4]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+
         if validate_contract(db, contract["medical_personal_id"], current_user.institution_id):
-            return crud_medicalPersonal.create_medical_contract(db, contract)
+            if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
+                return crud_medicalPersonal.create_medical_contract(db, contract)
+
 
 @router.post("/add-specialization")
 async def add_specialization(specialization: SpecializationCreate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
@@ -59,3 +76,7 @@ async def update_specialization(specialization_id : int, specialization: Special
 @router.delete("/remove-specialization/{specialization_id}")
 async def remove_specialization(specialization_id : int, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
     return crud_medicalPersonal.delete_specialization(db, specialization_id, current_user.id)
+
+@router.get("/schedule/{medical_id}/{institution_id}")
+async def get_schedule(medical_id: int, institution_id: int, db: Session = Depends(get_db)):
+    return crud_medicalPersonal.get_medicalPersonal_contract(db, medical_id, institution_id)

@@ -25,16 +25,64 @@ from validators.person.medicalPersonal import (
 from cruds.person.person import delete_person
 
 
+def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: int):
+    db_medicalPersonal = validate_medical_personal(db, medicalPersonal_id)
+
+    db_contract = (
+        db.query(Contract)
+        .filter(
+            and_(
+                Contract.medical_personal_id == medicalPersonal_id,
+                Contract.institution_id == institution_id,
+                Contract.status == 1,
+            )
+        )
+        .first()
+    )
+    if not db_contract:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Medical Personal in Institution not found",
+        )
+    else:
+        db_schedule = (
+            db.query(Schedule)
+            .filter(
+                and_(
+                    Schedule.id == db_contract.schedule_id,
+                    Schedule.status == 1,
+                )
+            )
+            .first()
+        )
+        
+        if not db_schedule:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Schedule not found",
+            )
+        else:
+            db_schedule_day = (
+                db.query(ScheduleDay)
+                .filter(
+                    and_(
+                        ScheduleDay.schedule_id == db_schedule.id,
+                        ScheduleDay.status == 1,
+                    )
+                )
+                .all()
+            )
+            db_schedule.schedule_day_list = db_schedule_day
+            return db_schedule
+
 def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     try:
-        validate_schedule(db, medicalPersonal.institution_id, medicalPersonal.schedule.schedule_day_list)
         medicalPersonal = validate_create_person(db, medicalPersonal)
         medicalPersonal = medicalPersonal.dict()
+        validate_schedule(db, medicalPersonal["institution_id"], medicalPersonal["schedule"]["schedule_day_list"])
 
         contract = dict()
         contract["institution_id"] = medicalPersonal.pop("institution_id")
-        validate_institution(db, contract["institution_id"])
-
         contract["department"] = medicalPersonal.pop("department")
         contract["role"] = medicalPersonal.pop("role")
         contract["schedule"] = medicalPersonal.pop("schedule")
