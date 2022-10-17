@@ -2,6 +2,7 @@
 from datetime import datetime
 from models.baseTable import BaseTable
 from models.person.person import Person
+from sqlalchemy.orm import relationship
 
 # SQLAlchemy
 from sqlalchemy import Column, Integer, Float,  ForeignKey, DateTime, SmallInteger
@@ -18,3 +19,5 @@ class Client(Person):
     client_updated_at = Column(DateTime, default=datetime.utcnow, nullable=False,
                                onupdate=datetime.utcnow)
     client_status = Column(SmallInteger, default=1, nullable=False)
+
+    appointments = relationship("Appointment", back_populates="client")

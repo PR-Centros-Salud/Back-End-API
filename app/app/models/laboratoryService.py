@@ -14,3 +14,5 @@ class LaboratoryService(BaseTable):
 
     # Relationships
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    
+

@@ -36,6 +36,8 @@ class Institution(BaseTable):
     province_id = Column(Integer, ForeignKey("province.id"), nullable=False)
     contract = relationship("Contract", back_populates="institution")
     room = relationship("Room", back_populates="institution")
+    
+    appointments = relationship("Appointment", back_populates="institution")
 
 class Room(BaseTable):
     __tablename__ = "room"
@@ -51,3 +53,5 @@ class Room(BaseTable):
     institution = relationship("Institution", back_populates="room")
 
     schedule_day = relationship("ScheduleDay", back_populates="room")
+    appointments = relationship("Appointment", back_populates="room")
+
