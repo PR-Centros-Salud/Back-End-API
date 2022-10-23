@@ -19,6 +19,7 @@ from routers import appointments, institution
 from config.database import Base
 from schemas.config.auth import Token, TokenData
 from config.oauth2 import authenticate_user, create_access_token
+from fastapi.middleware.cors import CORSMiddleware
 
 sys.dont_write_bytecode = True
 
@@ -28,6 +29,17 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app.include_router(client.router)
 app.include_router(person.router)

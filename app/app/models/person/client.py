@@ -20,4 +20,4 @@ class Client(Person):
                                onupdate=datetime.utcnow)
     client_status = Column(SmallInteger, default=1, nullable=False)
 
-    appointments = relationship("Appointment", back_populates="client")
+    # appointments = relationship("Appointment", back_populates="client")

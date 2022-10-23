@@ -64,7 +64,7 @@ class MedicalPersonal(Person):
         "Contract", back_populates="medical_personal"
     )
     specialization = relationship("Specialization", back_populates="medical_personal")
-    appointments = relationship("Appointment", back_populates="medical_personal")
+    # appointments = relationship("Appointment", back_populates="medical_personal")
 
 
 class Specialization(BaseTable):
