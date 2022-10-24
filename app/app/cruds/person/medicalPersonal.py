@@ -23,6 +23,7 @@ from validators.person.medicalPersonal import (
     validate_schedule
 )
 from cruds.person.person import delete_person
+from models.institution import Institution
 
 
 def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: int):
@@ -206,6 +207,42 @@ def get_contracts(db: Session, id: int):
         )
         .all()
     )
+
+    for contract in db_contract:
+        db_institution = (
+            db.query(Institution)
+            .filter(
+                and_(
+                    Institution.id == contract.institution_id,
+                    Institution.status == 1,
+                )
+            )
+            .first()
+        )
+        contract.institution = db_institution
+        db_schedule = (
+            db.query(Schedule)
+            .filter(
+                and_(
+                    Schedule.id == contract.schedule_id,
+                    Schedule.status == 1,
+                )
+            )
+            .first()
+        )
+        contract.schedule = db_schedule
+        db_schedule_day = (
+            db.query(ScheduleDay)
+            .filter(
+                and_(
+                    ScheduleDay.schedule_id == contract.schedule_id,
+                    ScheduleDay.status == 1,
+                )
+            )
+            .all()
+        )
+        contract.schedule.schedule_day_list = db_schedule_day
+
     return db_contract
 
 
