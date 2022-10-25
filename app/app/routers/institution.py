@@ -80,7 +80,7 @@ async def get_institution_laboratories(id: int, db: Session = Depends(get_db)):
     return crud_institution.get_institution_laboratories(db=db, institution_id=id)
 
 @router.get("/laboratory", response_model=list)
-async def get_laboratories_by_name(name: str, db: Session = Depends(get_db)):
+async def get_laboratories_by_name(name: Union[str, None] = None, db: Session = Depends(get_db)):
     return crud_institution.get_laboratories_by_name(db=db, name=name)
 
 # @router.patch("/laboratory/update/{id}", response_model=LaboratoryServiceGet)

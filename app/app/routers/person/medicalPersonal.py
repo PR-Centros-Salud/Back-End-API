@@ -30,6 +30,13 @@ async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Se
 async def update_medical_personal(medicalPersonal: MedicalPersonalUpdate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
     return crud_medicalPersonal.update_MedicalPersonal(db, medicalPersonal, current_user.id)
 
+@router.get("/institution/")
+async def get_medical_personal_by_institution(institution_id: Union[str, None] = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
+        return crud_medicalPersonal.get_MedicalPersonal_by_institution(db, current_user.institution_id)
+    else:
+        return crud_medicalPersonal.get_MedicalPersonal_by_institution(db, institution_id)
+
 
 @router.delete("/delete/{medical_id}")
 async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
@@ -40,29 +47,29 @@ async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db)
             status_code=status.HTTP_400_BAD_REQUEST, detail="You are not an admin"
         )
 
-@router.post("/add-contract")
-async def add_contract(contract: ContractCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
-    contract = contract.dict()
-    if current_user.discriminator == "superadmin":
-        institution = validate_institution(db, contract["institution_id"])
+# @router.post("/add-contract")
+# async def add_contract(contract: ContractCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+#     contract = contract.dict()
+#     if current_user.discriminator == "superadmin":
+#         institution = validate_institution(db, contract["institution_id"])
 
-        if institution.institution_type not in [1,2,4]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+#         if institution.institution_type not in [1,2,4]:
+#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
 
-        if validate_contract(db, contract["medical_personal_id"], contract["institution_id"]):
-            if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
-                return crud_medicalPersonal.create_medical_contract(db, contract)
-        raise HTTPException(status_code=403, detail="You don't have permission to add contract")
-    else:
-        contract["institution_id"] = current_user.institution_id
-        institution = validate_institution(db, contract["institution_id"])
+#         if validate_contract(db, contract["medical_personal_id"], contract["institution_id"]):
+#             if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
+#                 return crud_medicalPersonal.create_medical_contract(db, contract)
+#         raise HTTPException(status_code=403, detail="You don't have permission to add contract")
+#     else:
+#         contract["institution_id"] = current_user.institution_id
+#         institution = validate_institution(db, contract["institution_id"])
 
-        if institution.institution_type not in [1,2,4]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+#         if institution.institution_type not in [1,2,4]:
+#             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
 
-        if validate_contract(db, contract["medical_personal_id"], current_user.institution_id):
-            if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
-                return crud_medicalPersonal.create_medical_contract(db, contract)
+#         if validate_contract(db, contract["medical_personal_id"], current_user.institution_id):
+#             if validate_schedule(db, contract["institution_id"], contract["schedule"]["schedule_day_list"]):
+#                 return crud_medicalPersonal.create_medical_contract(db, contract)
 
 
 @router.post("/add-specialization")
