@@ -20,7 +20,7 @@ from validators.person.medicalPersonal import (
     validate_medical_personal,
     validate_contract,
     validate_schedule_day,
-    validate_schedule
+    validate_schedule,
 )
 from cruds.person.person import delete_person
 from models.institution import Institution
@@ -56,7 +56,7 @@ def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: in
             )
             .first()
         )
-        
+
         if not db_schedule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -76,11 +76,16 @@ def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: in
             db_schedule.schedule_day_list = db_schedule_day
             return db_schedule
 
+
 def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     try:
         medicalPersonal = validate_create_person(db, medicalPersonal)
         medicalPersonal = medicalPersonal.dict()
-        validate_schedule(db, medicalPersonal["institution_id"], medicalPersonal["schedule"]["schedule_day_list"])
+        validate_schedule(
+            db,
+            medicalPersonal["institution_id"],
+            medicalPersonal["schedule"]["schedule_day_list"],
+        )
 
         contract = dict()
         contract["institution_id"] = medicalPersonal.pop("institution_id")
@@ -102,10 +107,14 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
         )
     return db_medicalPersonal
 
+
 def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
     db_institution = validate_institution(db, institution_id)
     if db_institution != None:
-        if(db_institution.institution_type != 3 and db_institution.institution_type != 4):
+        if (
+            db_institution.institution_type != 3
+            and db_institution.institution_type != 4
+        ):
             db_medicalPersonal = (
                 db.query(MedicalPersonal)
                 .join(Contract)
@@ -120,7 +129,41 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
 
             for medicalPersonal in db_medicalPersonal:
                 medicalPersonal = medicalPersonal.__dict__
-                del medicalPersonal['_password']
+                medicalPersonal['contract'] = (
+                    db.query(Contract)
+                    .filter(
+                        and_(
+                            Contract.medical_personal_id == medicalPersonal['id'],
+                            Contract.institution_id == institution_id,
+                            Contract.status == 1,
+                        )
+                    )
+                    .first()
+                )
+                # medicalPersonal.contract.schedule = (
+                #     db.query(Schedule)
+                #     .filter(
+                #         and_(
+                #             Schedule.id == medicalPersonal.contract.schedule_id,
+                #             Schedule.status == 1,
+                #         )
+                #     )
+                #     .first()
+                # )
+                # medicalPersonal.contract.schedule.schedule_day_list = (
+                #     db.query(ScheduleDay)
+                #     .filter(
+                #         and_(
+                #             ScheduleDay.schedule_id
+                #             == medicalPersonal.contract.schedule_id,
+                #             ScheduleDay.status == 1,
+                #         )
+                #     )
+                #     .all()
+                # )
+                
+
+                del medicalPersonal["_password"]
             return db_medicalPersonal
         else:
             raise HTTPException(
@@ -133,7 +176,7 @@ def create_medical_contract(db: Session, contract: ContractCreate):
     try:
         db_institution = validate_institution(db, contract["institution_id"])
         if db_institution != None:
-            if(db_institution.institution_type != 3):
+            if db_institution.institution_type != 3:
                 schedule_day_list = contract["schedule"].pop("schedule_day_list")
 
                 db_schedule = Schedule(**contract.pop("schedule"))
@@ -146,7 +189,7 @@ def create_medical_contract(db: Session, contract: ContractCreate):
                     schedule_day["schedule_id"] = db_schedule.id
                     db_schedule_day = ScheduleDay(**schedule_day)
                     db.add(db_schedule_day)
-        
+
                 contract["schedule_id"] = db_schedule.id
                 db_contract = Contract(**contract)
                 db.add(db_contract)
