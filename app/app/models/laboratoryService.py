@@ -8,11 +8,11 @@ from models.baseTable import BaseTable
 
 
 class LaboratoryService(BaseTable):
-    __tablename__ = 'laboratoryService'
+    __tablename__ = 'laboratory_service'
 
     laboratory_service_name = Column(String(50), nullable=False)
 
     # Relationships
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
-    
+    laboratory_appointment = relationship("LaboratoryAppointment", back_populates="laboratory_service")
 

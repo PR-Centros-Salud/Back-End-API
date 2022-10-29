@@ -4,17 +4,15 @@ from datetime import datetime, date, time
 
 class AppointmentCreate(BaseModel):
     programmed_date : date = Field(..., description="Programmed date of the appointment")
-    start_time : time = Field(..., description="Start time of the appointment")
-    end_time : time = Field(..., description="End time of the appointment")
     medical_personal_id : int = Field(..., description="Medical personal id")
-    room_id : int = Field(..., description="Room id")
-    patient_id : int = Field(..., description="Patient id")
+    patient_id : int = Field(None, description="Patient id")
     institution_id : int = Field(..., description="Institution id")
+    schedule_day_appointment_id : int = Field(..., description="Schedule day appointment id")
 
     @validator('programmed_date')
     def validate_programmed_date(cls, v):
         if v < date.today():
-            raise ValueError('Programmed date must be greater than today')
+            raise ValueError('Programmed date must be greater or equal to today')
         return v
 
 

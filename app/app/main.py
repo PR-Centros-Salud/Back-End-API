@@ -15,7 +15,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from routers.person import client, person, admin, superadmin, medicalPersonal
-from routers import appointments, institution
+from routers import institution
+from routers.appointments import medappointments
 from config.database import Base
 from schemas.config.auth import Token, TokenData
 from config.oauth2 import authenticate_user, create_access_token
@@ -47,7 +48,7 @@ app.include_router(admin.router)
 app.include_router(superadmin.router)
 app.include_router(institution.router)
 app.include_router(medicalPersonal.router)
-app.include_router(appointments.router)
+app.include_router(medappointments.router)
 
 
 @app.get("/")

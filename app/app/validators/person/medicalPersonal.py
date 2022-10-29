@@ -23,7 +23,7 @@ def validate_medical_personal(db: Session, medical_id : int):
     else:
         return db_medicalPersonal
 
-def validate_contract(db: Session, medical_id: int, institution_id : int) -> bool:
+def validate_contract(db: Session, medical_id: int, institution_id : int):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
     db_contract = (
         db.query(Contract)
@@ -38,12 +38,9 @@ def validate_contract(db: Session, medical_id: int, institution_id : int) -> boo
     )
 
     if db_contract:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Active contract already exists",
-        )
+        return db_contract
     else:
-        return True
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found")
 
 
 def validate_schedule(db: Session, institution_id: int, schedule_day_list: list) -> bool:

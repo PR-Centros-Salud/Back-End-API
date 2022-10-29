@@ -1,71 +1,30 @@
-from models.appointments import Appointment
+from models.appointments import Appointment, MedicalAppointment
+from validators.institution import validate_institution
 from models.location import Province
 from schemas.appointments import AppointmentGet, AppointmentCreate, AppointmentUpdate
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy import exc, or_, and_
 from validators.location import validate_location
+from validators.person.medicalPersonal import validate_contract
+from validators.appointments import validate_appointment
 from cruds.person.person import delete_person
+from schemas.appointments import MedicalAppointmentCreate
+# def get_appointment_by_id(db: Session, id: int):
+#     return db.query(Appointment).filter(
+#         and_(Appointment.id == id, Appointment.status == 1)).first()
 
-def get_appointment_by_id(db: Session, id: int):
-    return db.query(Appointment).filter(
-        and_(Appointment.id == id, Appointment.status == 1)).first()
-
-def create_admin(db: Session, admin: AppointmentCreate):
+def create_medical_appointment(db: Session, appointment: MedicalAppointmentCreate):
     try:
-        admin = validate_create_admin(db, admin)
-        db_admin = Admin(**admin.dict())
-        db.add(db_admin)
-        db.commit()
-        db.refresh(db_admin)
-    except exc.SQLAlchemyError as e:
-        print(e)
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Admin error."
-        )
-    return db_admin
+        institution = validate_institution(db, appointment.institution_id)
+        contract = validate_contract(db, appointment.medical_personal_id, appointment.institution_id)
+        appointment = validate_appointment(db, appointment, contract.schedule_id)
 
-
-def update_admin(db: Session, admin: AppointmentUpdate, id: int):
-    db_admin = db.query(Appointment).filter(
-        and_(Appointment.id == id, Appointment.status == 1)).first()
-    if not db_admin:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin not found"
-        )
-
-    if (admin.first_name):
-        db_admin.first_name = admin.first_name
-    if (admin.last_name):
-        db_admin.last_name = admin.last_name
-    if (admin.second_last_name):
-        db_admin.second_last_name = admin.second_last_name
-    if (admin.email):
-        db_admin.email = admin.email
-    if (admin.phone):
-        db_admin.phone = admin.phone
-    if (admin.address):
-        db_admin.address = admin.address
-    if (admin.province_id and validate_location(db, admin.province_id)):
-        db_admin.province_id = admin.province_id
-    db.commit()
-    db.refresh(db_admin)
-    return db_admin
-
-
-def delete_admin(db: Session, id: int):
-    db_admin = db.query(Admin).filter(
-        and_(Admin.id == id, Admin.status == 1)).first()
-
-    if not db_admin or not delete_person(db, id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Admin not found"
-        )
-
-    db_admin.admin_status = 0
-    db.commit()
-    return db_admin
+        # db_appointment = Appointment(**appointment.dict())
+        # db.add(db_appointment)
+        # db.commit()
+        # db.refresh(db_appointment)
+        # return db_appointment
+        return appointment
+    except exc.IntegrityError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data")

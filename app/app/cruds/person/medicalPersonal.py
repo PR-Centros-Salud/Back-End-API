@@ -1,7 +1,7 @@
 from models.person.medicalPersonal import MedicalPersonal, Specialization
-from datetime import datetime
+from datetime import datetime, timedelta
 from models.person.person import Person
-from models.person.medicalPersonal import Contract, Schedule, ScheduleDay
+from models.person.medicalPersonal import Contract, Schedule, ScheduleDay, ScheduleDayAppointment
 from schemas.person.medicalPersonal import (
     MedicalPersonalCreate,
     MedicalPersonalGet,
@@ -178,7 +178,7 @@ def create_medical_contract(db: Session, contract: ContractCreate):
         if db_institution != None:
             if db_institution.institution_type != 3:
                 schedule_day_list = contract["schedule"].pop("schedule_day_list")
-
+                
                 db_schedule = Schedule(**contract.pop("schedule"))
                 db.add(db_schedule)
                 db.commit()
@@ -189,6 +189,27 @@ def create_medical_contract(db: Session, contract: ContractCreate):
                     schedule_day["schedule_id"] = db_schedule.id
                     db_schedule_day = ScheduleDay(**schedule_day)
                     db.add(db_schedule_day)
+                    db.commit()
+                    db.refresh(db_schedule_day)
+                    start_time = datetime.strptime(schedule_day["start_time"].strftime("%H:%M:%S"), "%H:%M:%S")
+                    end_time = datetime.strptime(schedule_day["end_time"].strftime("%H:%M:%S"), "%H:%M:%S")
+
+                    delta = int(((end_time - start_time).seconds / 60) / db_schedule.estimated_appointment_time)
+
+                    start_appointment = datetime.combine(
+                        datetime.today(), schedule_day["start_time"])
+
+                    for i in range(delta):
+                        end_appointment = start_appointment + timedelta(minutes=db_schedule.estimated_appointment_time)
+                        db_schedule_day_appointment = ScheduleDayAppointment(
+                            schedule_day_id=db_schedule_day.id,
+                            start_time=start_appointment.time(),
+                            end_time=end_appointment.time(),
+                        )
+                        db.add(db_schedule_day_appointment)
+                        db.commit()
+                        start_appointment = end_appointment
+
 
                 contract["schedule_id"] = db_schedule.id
                 db_contract = Contract(**contract)

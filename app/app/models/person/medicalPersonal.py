@@ -16,7 +16,7 @@ from sqlalchemy import (
     Date,
     SmallInteger,
     DateTime,
-    Time
+    Time,
 )
 from sqlalchemy.orm import relationship
 from models.baseTable import BaseTable
@@ -34,16 +34,13 @@ class Contract(BaseTable):
     medical_personal_id = Column(
         Integer, ForeignKey("medical_personal.id"), nullable=False
     )
-    medical_personal = relationship(
-        "MedicalPersonal", back_populates="contract"
-    )
+    medical_personal = relationship("MedicalPersonal", back_populates="contract")
 
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
     institution = relationship("Institution", back_populates="contract")
 
     schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
     schedule = relationship("Schedule", back_populates="contract")
-    
 
 
 class MedicalPersonal(Person):
@@ -60,11 +57,9 @@ class MedicalPersonal(Person):
     medical_personal_status = Column(SmallInteger, default=1, nullable=False)
 
     # Relationships
-    contract = relationship(
-        "Contract", back_populates="medical_personal"
-    )
+    contract = relationship("Contract", back_populates="medical_personal")
     specialization = relationship("Specialization", back_populates="medical_personal")
-    # appointments = relationship("Appointment", back_populates="medical_personal")
+    appointment = relationship("Appointment", back_populates="medical_personal")
 
 
 class Specialization(BaseTable):
@@ -81,6 +76,7 @@ class Specialization(BaseTable):
     medical_personal_id = Column(Integer, ForeignKey("medical_personal.id"))
     medical_personal = relationship("MedicalPersonal", back_populates="specialization")
 
+
 class Schedule(BaseTable):
     __tablename__ = "schedule"
 
@@ -89,6 +85,7 @@ class Schedule(BaseTable):
     # Relationships
     schedule_day = relationship("ScheduleDay", back_populates="schedule")
     contract = relationship("Contract", back_populates="schedule", uselist=False)
+
 
 class ScheduleDay(BaseTable):
     __tablename__ = "schedule_day"
@@ -104,4 +101,21 @@ class ScheduleDay(BaseTable):
     room_id = Column(Integer, ForeignKey("room.id"), nullable=False)
     room = relationship("Room", back_populates="schedule_day")
 
-    
+    schedule_day_appointment = relationship(
+        "ScheduleDayAppointment", back_populates="schedule_day"
+    )
+
+
+class ScheduleDayAppointment(BaseTable):
+    __tablename__ = "schedule_day_appointment"
+
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+
+    # Relationships
+    schedule_day_id = Column(Integer, ForeignKey("schedule_day.id"), nullable=False)
+    schedule_day = relationship(
+        "ScheduleDay", back_populates="schedule_day_appointment"
+    )
+
+    appointment = relationship("Appointment", back_populates="schedule_day_appointment")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from cruds.person import medicalPersonal as crud_medicalPersonal
 from typing import Union
 from config.database import get_db
@@ -10,7 +10,6 @@ from validators.person.medicalPersonal import validate_medical_personal, validat
 from validators.institution import validate_institution
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token, get_current_admin, get_current_medical
-from fastapi import HTTPException, status
 
 router = APIRouter(
     prefix="/medicalPersonal",
