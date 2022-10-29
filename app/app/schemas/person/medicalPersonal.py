@@ -22,7 +22,7 @@ class ScheduleDayCreate(BaseModel):
     end_time: time = Field(..., description="End time of the schedule")
     room_id: int = Field(..., description="Room id of the schedule")
 
-    class Config: 
+    class Config:
         orm_mode = True
 
 class ScheduleCreate(BaseModel):
@@ -36,7 +36,7 @@ class MedicalPersonalCreate(PersonCreate):
     department : str = Field(None, description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
     schedule : ScheduleCreate = Field(..., description="Schedule of the medicalPersonal")
-    
+
 class MedicalPersonalGet(PersonGet):
     """MedicalPersonalGet Schema"""
     # Add your fields here
