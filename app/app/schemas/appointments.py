@@ -48,3 +48,13 @@ class LaboratoryAppointmentCreate(AppointmentCreate):
     laboratory_service_id : int = Field(..., description="Laboratory service id")
 
 
+class MedicalAppointmentFinished(BaseModel):
+    recipe: str = Field(None, description="Recipe of the appointment")
+    class Config:
+        orm_mode = True
+
+class LaboratoryAppointmentFinished(BaseModel):
+    result: str = Field(None, description="Result of the appointment")
+    delivery_datetime: datetime = Field(..., description="Delivery datetime of the appointment")
+    class Config:
+        orm_mode = True

@@ -113,7 +113,7 @@ def validate_appointment(
             ):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Client already has an overlapping appointment",
+                    detail="Client has an overlapping appointment",
                 )
 
             if (
@@ -133,7 +133,7 @@ def validate_appointment(
             and_(
                 Appointment.schedule_day_appointment_id
                 == db_schedule_day_appointment.id,
-                Appointment.status == 1,
+                or_(Appointment.status == 1, Appointment.status == 2),
                 Appointment.programmed_date == appointment_create.programmed_date,
             )
         )
