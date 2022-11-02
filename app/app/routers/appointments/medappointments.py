@@ -22,14 +22,14 @@ async def create_appointment(appointment: MedicalAppointmentCreate, db: Session 
 @router.patch('/confirm/{id}')
 async def confirm_appointment(id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user.discriminator == "medical_personal":
-        return crud_appointments.update_medical_appointment(db=db, id=id, status=2, user=current_user, appointment_type=1)
+        return crud_appointments.update_appointment(db=db, id=id, appointment_status=2, user=current_user, appointment_type=1)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
 
 @router.patch('/cancel/{id}')
 async def cancel_appointment(id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user.discriminator == "medical_personal" or current_user.discriminator == "client":
-        return crud_appointments.update_medical_appointment(db=db, id=id, status=3, user=current_user, appointment_type=1)
+        return crud_appointments.update_appointment(db=db, id=id, appointment_status=3, user=current_user, appointment_type=1)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
 
@@ -40,19 +40,19 @@ async def update_appointment(appointment: MedicalAppointmentFinished, id: int, d
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
 
-# @router.get('/medical_personal/today')
-# async def get_medical_personal_appointments(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
-#     if current_user.discriminator == "medical_personal":
-#         return crud_appointments.get_medical_personal_appointments(db=db, user=current_user)
-#     else:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
+@router.get('/medical_personal')
+async def get_medical_personal_appointments(q: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    if current_user.discriminator == "medical_personal":
+        return crud_appointments.get_medical_personal_appointments(db=db, medical_personal_id=current_user.id, appointment_status=q)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
 
-# @router.get('/client')
-# async def get_client_appointments(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
-#     if current_user.discriminator == "client":
-#         return crud_appointments.get_client_appointments(db=db, user=current_user)
-#     else:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a client")
+@router.get('/client')
+async def get_client_appointments(q: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    if current_user.discriminator == "client":
+        return crud_appointments.get_client_appointments(db=db, patient_id=current_user.id, q=q)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a client")
 
 
 

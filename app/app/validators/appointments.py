@@ -124,7 +124,7 @@ def validate_appointment(
             ):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Client already has an overlapping appointment",
+                    detail="Client has an overlapping appointment",
                 )
 
     db_appointment = (
