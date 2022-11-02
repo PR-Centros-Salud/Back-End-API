@@ -36,7 +36,7 @@ async def cancel_appointment(id: int, db: Session = Depends(get_db), current_use
 @router.patch('/finish/{id}')
 async def update_appointment(appointment: MedicalAppointmentFinished, id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user.discriminator == "medical_personal":
-        return crud_appointments.finish_appointment(db=db, id=id, status=4, user=current_user, finished=appointment)
+        return crud_appointments.finish_appointment(db=db, id=id, user=current_user, finished=appointment)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a medical personal")
 
