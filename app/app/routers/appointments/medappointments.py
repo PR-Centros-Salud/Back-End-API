@@ -50,7 +50,7 @@ async def get_medical_personal_appointments(q: int, db: Session = Depends(get_db
 @router.get('/client')
 async def get_client_appointments(q: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user.discriminator == "client":
-        return crud_appointments.get_client_appointments(db=db, patient_id=current_user.id, q=q)
+        return crud_appointments.get_client_appointments(db=db, patient_id=current_user.id, q=q, type=1)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a client")
 

@@ -27,6 +27,7 @@ class ScheduleDayCreate(BaseModel):
 
 class ScheduleCreate(BaseModel):
     """ScheduleCreate Schema"""
+    institution_id : int = Field(..., description="Institution id of the schedule")
     estimated_appointment_time : int = Field(..., description="Estimated appointment time of the medicalPersonal")
     schedule_day_list : list[ScheduleDayCreate] = Field(..., description="Schedule day list of the medicalPersonal")
 
@@ -35,7 +36,7 @@ class MedicalPersonalCreate(PersonCreate):
     institution_id: int = Field(..., description="Institution id of the medicalPersonal")
     department : str = Field(None, description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
-    schedule : ScheduleCreate = Field(..., description="Schedule of the medicalPersonal")
+    is_lab_personal : int = Field(..., description="Is lab personal of the medicalPersonal")
 
 class MedicalPersonalGet(PersonGet):
     """MedicalPersonalGet Schema"""
@@ -54,7 +55,7 @@ class ContractCreate(BaseModel):
     role : str = Field(..., description="Role of the medicalPersonal")
     institution_id: int = Field(None, description="Institution id of the medicalPersonal")
     medical_personal_id: int = Field(..., description="Medical personal id of the medicalPersonal")
-    schedule : ScheduleCreate = Field(..., description="Schedule of the medicalPersonal")
+    
 
 
 class SpecializationCreate(BaseModel):

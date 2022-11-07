@@ -23,14 +23,15 @@ class Appointment(BaseTable):
     room_id = Column(Integer, ForeignKey("room.id"), nullable=False)
     patient_id = Column(Integer, ForeignKey("client.id"), nullable=False)
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
+    schedule_day_appointment_id = Column(
+        Integer, ForeignKey("schedule_day_appointment.id"), nullable=False
+    )
+
     medical_personal = relationship("MedicalPersonal", back_populates="appointment")
     client = relationship("Client", back_populates="appointment")
     room = relationship("Room", back_populates="appointment")
     institution = relationship("Institution", back_populates="appointment")
     discriminator = Column("type", String(50), nullable=False)
-    schedule_day_appointment_id = Column(
-        Integer, ForeignKey("schedule_day_appointment.id"), nullable=False
-    )
     schedule_day_appointment = relationship(
         "ScheduleDayAppointment", back_populates="appointment"
     )

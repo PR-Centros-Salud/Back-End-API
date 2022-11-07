@@ -30,6 +30,7 @@ class Contract(BaseTable):
     end_date = Column(DateTime, nullable=True)
     department = Column(String(50), nullable=True)
     role = Column(String(100), nullable=False)
+    is_lab_personal = Column(SmallInteger, nullable=False, default=0)
 
     medical_personal_id = Column(
         Integer, ForeignKey("medical_personal.id"), nullable=False
@@ -39,7 +40,7 @@ class Contract(BaseTable):
     institution_id = Column(Integer, ForeignKey("institution.id"), nullable=False)
     institution = relationship("Institution", back_populates="contract")
 
-    schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
+    schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=True)
     schedule = relationship("Schedule", back_populates="contract")
 
 
@@ -60,7 +61,10 @@ class MedicalPersonal(Person):
     contract = relationship("Contract", back_populates="medical_personal")
     specialization = relationship("Specialization", back_populates="medical_personal")
     appointment = relationship("Appointment", back_populates="medical_personal")
-
+    laboratory_service = relationship(
+        "LaboratoryService", back_populates="medical_personal"
+    )
+    
 
 class Specialization(BaseTable):
     __tablename__ = "specialization"

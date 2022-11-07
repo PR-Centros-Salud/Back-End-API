@@ -23,28 +23,45 @@ def validate_create_person(
         medical_schema.MedicalPersonalCreate,
     ],
 ):
-    db_person = (
-        db.query(Person)
-        .filter(
-            or_(
-                Person.email == person.email,
-                Person.username == person.username,
-                Person.identity_card == person.identity_card,
+    if type(person) == medical_schema.MedicalPersonalCreate:
+        db_person = (
+            db.query(Person)
+            .filter(
+                or_(
+                    Person.email == person.email,
+                    Person.phone == person.phone,
+                    Person.identity_card == person.identity_card,
+                )
             )
+            .filter(Person.status == 1)
+            .first()
         )
-        .filter(Person.status == 1)
-        .first()
-    )
+    else:
+         db_person = (
+            db.query(Person)
+            .filter(
+                or_(
+                    Person.email == person.email,
+                    Person.phone == person.phone,
+                    Person.identity_card == person.identity_card,
+                    Person.username == person.username,
+                )
+            )
+            .filter(Person.status == 1)
+            .first()
+        )
 
     if db_person:
         detail = "Person already exists"
 
         if db_person.email == person.email:
             detail = "Email already exists"
-        elif db_person.username == person.username:
-            detail = "Username already exists"
-        else:
+        elif db_person.identity_card == person.identity_card:
             detail = "Identity card already exists"
+        elif db_person.phone == person.phone:
+            detail = "Phone already exists"
+        else:
+            detail = "Username already exists"
 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 

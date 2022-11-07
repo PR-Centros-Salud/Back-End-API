@@ -15,27 +15,19 @@ from schemas.person.person import PersonGet
 from typing import Union
 from datetime import date, timedelta
 
-def create_medical_appointment(db: Session, appointment: MedicalAppointmentCreate):
+def create_medical_appointment(db: Session, appointment: Union[MedicalAppointmentCreate, LaboratoryAppointmentCreate]):
     try:
-        db_appointment = db.query(MedicalAppointment).filter(
-            and_(
-                MedicalAppointment.patient_id == appointment.patient_id,
-                MedicalAppointment.status == 1,
-                or_(MedicalAppointment.programmed_date == date.today(), MedicalAppointment.programmed_date == (date.today() + timedelta(days=1)))
-            )
-        ).all()
-
-        if db_appointment:
-            for ap in db_appointment:
-                ap.status = 3
-                db.commit()
-                db.refresh(ap)
-
-
         institution = validate_institution(db, appointment.institution_id)
         contract = validate_contract(
             db, appointment.medical_personal_id, appointment.institution_id
         )
+
+        if contract.is_lab_personal and type(appointment) == MedicalAppointmentCreate:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You can't schedule a medical appointment with a laboratory specialist",
+            )
+
         day = appointment.programmed_date.weekday() + 1
         db_schedule_day = (
             db.query(ScheduleDay)
@@ -56,29 +48,45 @@ def create_medical_appointment(db: Session, appointment: MedicalAppointmentCreat
             )
 
         if validate_appointment(db, appointment, contract.schedule_id, db_schedule_day):
-            db_appointment = MedicalAppointment(
-                patient_id=appointment.patient_id,
-                medical_personal_id=appointment.medical_personal_id,
-                institution_id=appointment.institution_id,
-                schedule_day_appointment_id=appointment.schedule_day_appointment_id,
-                programmed_date=appointment.programmed_date,
-                room_id=db_schedule_day.room_id,
-            )
-            db.add(db_appointment)
-            db.commit()
-            db.refresh(db_appointment)
-            return db_appointment
+            if type(appointment) == MedicalAppointmentCreate:
+                db_appointment = MedicalAppointment(
+                    patient_id=appointment.patient_id,
+                    medical_personal_id=appointment.medical_personal_id,
+                    institution_id=appointment.institution_id,
+                    schedule_day_appointment_id=appointment.schedule_day_appointment_id,
+                    programmed_date=appointment.programmed_date,
+                    room_id=db_schedule_day.room_id,
+                )
+                db.add(db_appointment)
+                db.commit()
+                db.refresh(db_appointment)
+                return db_appointment
+            else:
+                db_appointment = LaboratoryAppointment(
+                    patient_id=appointment.patient_id,
+                    medical_personal_id=appointment.medical_personal_id,
+                    institution_id=appointment.institution_id,
+                    schedule_day_appointment_id=appointment.schedule_day_appointment_id,
+                    programmed_date=appointment.programmed_date,
+                    room_id=db_schedule_day.room_id,
+                    laboratory_service_id=appointment.laboratory_service_id,
+                )
+                db.add(db_appointment)
+                db.commit()
+                db.refresh(db_appointment)
+                return db_appointment
+                
 
     except exc.IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
         )
 
-def update_appointment(db: Session, id: int, appointment_status: int, user: PersonGet, appointment_type: int):
+def update_appointment(db: Session, id: int, appointment_status: int, user: PersonGet, type: int):
     try:
         db_appointment = None
 
-        if appointment_type == 1:
+        if type == 1:
             db_appointment = db.query(MedicalAppointment).filter(
                 and_(MedicalAppointment.id == id)
             ).first()
@@ -200,93 +208,163 @@ def finish_appointment(db: Session, id: int, user: PersonGet, finished : Union[M
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
         )
 
-def get_medical_personal_appointments(db: Session, medical_personal_id: int, appointment_status: int):
+def get_medical_personal_appointments(db: Session, medical_personal_id: int, appointment_status: int, type:int):
     try:
         db_appointments = None
         if appointment_status < 1 or appointment_status > 6:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status"
             )
-        
-        if appointment_status == 5:
-            db_appointments = db.query(MedicalAppointment).filter(
-                MedicalAppointment.medical_personal_id == medical_personal_id
-            ).all()
-        elif appointment_status == 6:
-            db_appointments = db.query(MedicalAppointment).filter(
-                and_(
-                    MedicalAppointment.medical_personal_id == medical_personal_id,
-                    MedicalAppointment.status == 2, 
-                    MedicalAppointment.programmed_date == date.today()
-                )
-            ).all()
-        else:
-            db_appointments = (
-                db.query(MedicalAppointment)
-                .filter(
+        if type == 1:
+            if appointment_status == 5:
+                db_appointments = db.query(MedicalAppointment).filter(
+                    MedicalAppointment.medical_personal_id == medical_personal_id
+                ).all()
+            elif appointment_status == 6:
+                db_appointments = db.query(MedicalAppointment).filter(
                     and_(
                         MedicalAppointment.medical_personal_id == medical_personal_id,
-                        MedicalAppointment.status == appointment_status,
+                        MedicalAppointment.status == 2, 
+                        MedicalAppointment.programmed_date == date.today()
                     )
+                ).all()
+            else:
+                db_appointments = (
+                    db.query(MedicalAppointment)
+                    .filter(
+                        and_(
+                            MedicalAppointment.medical_personal_id == medical_personal_id,
+                            MedicalAppointment.status == appointment_status,
+                        )
+                    )
+                    .all()
                 )
-                .all()
-            )
-        
-        return db_appointments
+            
+            return db_appointments
+        else:
+            if appointment_status == 5:
+                db_appointments = db.query(LaboratoryAppointment).filter(
+                    LaboratoryAppointment.medical_personal_id == medical_personal_id
+                ).all()
+            elif appointment_status == 6:
+                db_appointments = db.query(LaboratoryAppointment).filter(
+                    and_(
+                        LaboratoryAppointment.medical_personal_id == medical_personal_id,
+                        LaboratoryAppointment.status == 2, 
+                        LaboratoryAppointment.programmed_date == date.today()
+                    )
+                ).all()
+            else:
+                db_appointments = (
+                    db.query(LaboratoryAppointment)
+                    .filter(
+                        and_(
+                            LaboratoryAppointment.medical_personal_id == medical_personal_id,
+                            LaboratoryAppointment.status == appointment_status,
+                        )
+                    )
+                    .all()
+                )
+            
+            return db_appointments
     except exc.IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
         )
 
-def get_client_appointments(db: Session, patient_id: int, q: str):
+def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
     try:
-        db_appointments = (
-                db.query(MedicalAppointment)
-                .filter(
-                    and_(
-                        MedicalAppointment.patient_id == patient_id,
-                        MedicalAppointment.status == 1,
-                        MedicalAppointment.programmed_date >= date.today(),
-                    )
-                )
-                .all()
-            )
-
-        if q == 1:
+        if type == 1:
             db_appointments = (
-                db.query(MedicalAppointment)
-                .filter(
-                    and_(
-                        MedicalAppointment.patient_id == patient_id,
-                        MedicalAppointment.status == 2,
-                        MedicalAppointment.programmed_date >= date.today(),
+                    db.query(MedicalAppointment)
+                    .filter(
+                        and_(
+                            MedicalAppointment.patient_id == patient_id,
+                            MedicalAppointment.status == 1,
+                            MedicalAppointment.programmed_date >= date.today(),
+                        )
                     )
+                    .all()
                 )
-                .all()
-            )
 
-            for ap in db_appointments:
-                ap.room = db.query(Room).filter(Room.id == ap.room_id).first()
-
-        elif q == 2:
-            db_appointments = (
-                db.query(MedicalAppointment)
-                .filter(
-                    and_(
-                        MedicalAppointment.patient_id == patient_id,
-                        MedicalAppointment.status == 4,
-                        MedicalAppointment.programmed_date < date.today(),
+            if q == 1:
+                db_appointments = (
+                    db.query(MedicalAppointment)
+                    .filter(
+                        and_(
+                            MedicalAppointment.patient_id == patient_id,
+                            MedicalAppointment.status == 2,
+                            MedicalAppointment.programmed_date >= date.today(),
+                        )
                     )
+                    .all()
                 )
-                .all()
-            )
-            for ap in db_appointments:
-                ap.room = db.query(Room).filter(Room.id == ap.room_id).first()
+
+                for ap in db_appointments:
+                    ap.room = db.query(Room).filter(Room.id == ap.room_id).first()
+
+            elif q == 2:
+                db_appointments = (
+                    db.query(MedicalAppointment)
+                    .filter(
+                        and_(
+                            MedicalAppointment.patient_id == patient_id,
+                            MedicalAppointment.status == 4,
+                            MedicalAppointment.programmed_date < date.today(),
+                        )
+                    )
+                    .all()
+                )
+                for ap in db_appointments:
+                    ap.room = db.query(Room).filter(Room.id == ap.room_id).first()
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query"
+                )
+            return db_appointments
         else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query"
-            )
-        return db_appointments
+            db_appointments = (
+                    db.query(LaboratoryAppointment)
+                    .filter(
+                        and_(
+                            LaboratoryAppointment.patient_id == patient_id,
+                            LaboratoryAppointment.status == 1,
+                            LaboratoryAppointment.programmed_date >= date.today(),
+                        )
+                    )
+                    .all()
+                )
+
+            if q == 1:
+                db_appointments = (
+                    db.query(LaboratoryAppointment)
+                    .filter(
+                        and_(
+                            LaboratoryAppointment.patient_id == patient_id,
+                            LaboratoryAppointment.status == 2,
+                            LaboratoryAppointment.programmed_date >= date.today(),
+                        )
+                    )
+                    .all()
+                )
+
+            elif q == 2:
+                db_appointments = (
+                    db.query(LaboratoryAppointment)
+                    .filter(
+                        and_(
+                            LaboratoryAppointment.patient_id == patient_id,
+                            LaboratoryAppointment.status == 4,
+                            LaboratoryAppointment.programmed_date < date.today(),
+                        )
+                    )
+                    .all()
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query"
+                )
+            return db_appointments
     except exc.IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"

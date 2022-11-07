@@ -6,24 +6,24 @@ from schemas.person.person import PersonCreate, PersonGet, PersonUpdate, PersonU
 
 class ClientCreate(PersonCreate):
     """ClientCreate Schema"""
-    # Add your fields here
+    username: str = Field(...,
+                          description="Username of the person", max_length=30, min_length=3)
+    password: str = Field(...,
+                          description="Password of the person", max_length=20)
     lat : float = Field(..., description="Latitude of the client")
     lng : float = Field(..., description="Longitude of the client")
-    pass
 
 
 class ClientGet(PersonGet):
     """ClientGet Schema"""
-    # Add your fields here
     lat : float
     lng : float
-    pass
 
 
 class ClientUpdate(PersonUpdate):
     """ClientUpdate Schema"""
-    # Add your fields here
-    pass
+    lat : Optional[float] = Field(None, description="Latitude of the client")
+    lng : Optional[float] = Field(None, description="Longitude of the client")
 
 
 class ClientUpdatePassword(PersonUpdatePassword):

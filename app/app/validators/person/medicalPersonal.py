@@ -45,7 +45,7 @@ def validate_contract(db: Session, medical_id: int, institution_id : int):
 
 def validate_schedule(db: Session, institution_id: int, schedule_day_list: list) -> bool:
     for schedule_day in schedule_day_list:
-        validate_schedule_day(db, schedule_day["day"].value, schedule_day["room_id"], institution_id)
+        validate_schedule_day(db, schedule_day.day.value, schedule_day.room_id, institution_id)
     return True
 
 def validate_schedule_day(db: Session, day: int, room_id: int, institution_id: bool) -> bool:

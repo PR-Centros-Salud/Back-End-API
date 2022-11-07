@@ -11,11 +11,7 @@ class PersonCreate(BaseModel):
                            description="Last name of the person", max_length=50, min_length=2)
     second_last_name: Optional[str] = Field(None,
                                             description="Second last name of the person", max_length=50, min_length=2)
-    username: str = Field(...,
-                          description="Username of the person", max_length=30, min_length=3)
     email: EmailStr = Field(..., description="Email of the person")
-    password: str = Field(...,
-                          description="Password of the person", max_length=20)
     phone: str = Field(...,
                        description="Phone of the person", max_length=20)
     identity_card: str = Field(...,

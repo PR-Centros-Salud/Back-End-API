@@ -8,16 +8,21 @@ from validators.location import validate_location
 from fastapi import HTTPException, status
 from sqlalchemy import exc, and_, or_
 from validators.person.medicalPersonal import validate_medical_personal
-from schemas.appointments import AppointmentCreate
+from schemas.appointments import MedicalAppointmentCreate, LaboratoryAppointmentCreate
 from datetime import timedelta, datetime
-
+from typing import Union
 
 def validate_appointment(
     db: Session,
-    appointment_create: AppointmentCreate,
+    appointment_create: Union[MedicalAppointmentCreate, LaboratoryAppointmentCreate],
     schedule_id: int,
     schedule_day: ScheduleDay,
 ) -> bool:
+    if appointment_create.programmed_date < (datetime.now().date() + timedelta(days=1)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Programmed date must be greater or equal to tomorrow",
+        )
     db_schedule = (
         db.query(Schedule)
         .filter(and_(Schedule.id == schedule_id, Schedule.status == 1))
@@ -63,7 +68,7 @@ def validate_appointment(
 
     if db_appointment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Client already has a pending appointment with this medical personal",
         )
 
@@ -112,7 +117,7 @@ def validate_appointment(
                 <= db_schedule_day_appointment_2.end_time
             ):
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Client has an overlapping appointment",
                 )
 
@@ -123,7 +128,7 @@ def validate_appointment(
                 <= db_schedule_day_appointment_2.end_time
             ):
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Client has an overlapping appointment",
                 )
 
@@ -142,7 +147,7 @@ def validate_appointment(
 
     if db_appointment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Appointment time has already been taken",
         )
 

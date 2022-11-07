@@ -3,7 +3,7 @@ from cruds.person import medicalPersonal as crud_medicalPersonal
 from typing import Union
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, ContractCreate
+from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, ContractCreate, ScheduleCreate
 from schemas.person.admin import AdminGet
 from schemas.person.person import PersonGet
 from validators.person.medicalPersonal import validate_medical_personal, validate_contract, validate_schedule
@@ -22,6 +22,8 @@ async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Se
     institution = validate_institution(db, medicalPersonal.institution_id)
     if institution.institution_type not in [1,2,4]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+    if current_user.discriminator == 'admin' and current_user.institution_id != institution.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution")
     return crud_medicalPersonal.create_MedicalPersonal(db, medicalPersonal)
 
 
@@ -46,6 +48,13 @@ async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db)
             status_code=status.HTTP_400_BAD_REQUEST, detail="You are not an admin"
         )
 
+@router.post("/add-schedule/{medical_id}")
+async def add_schedule(medical_id: int, schedule: ScheduleCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == 'admin' and current_user.institution_id != institution.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution")
+    return crud_medicalPersonal.add_schedule(db, medical_id, schedule)
+    
+    
 # @router.post("/add-contract")
 # async def add_contract(contract: ContractCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
 #     contract = contract.dict()

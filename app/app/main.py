@@ -16,7 +16,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from routers.person import client, person, admin, superadmin, medicalPersonal
 from routers import institution
-from routers.appointments import medappointments
+from routers.appointments import medappointments, labappointments
 from config.database import Base
 from schemas.config.auth import Token, TokenData
 from config.oauth2 import authenticate_user, create_access_token
@@ -49,6 +49,7 @@ app.include_router(superadmin.router)
 app.include_router(institution.router)
 app.include_router(medicalPersonal.router)
 app.include_router(medappointments.router)
+app.include_router(labappointments.router)
 
 
 @app.get("/")

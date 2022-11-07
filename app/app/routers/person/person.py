@@ -5,9 +5,11 @@ from schemas.person.person import PersonCreate, PersonGet, PersonUpdatePassword
 from config.database import get_db
 from config.oauth2 import get_current_active_user, authenticate_user, create_access_token
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from sqlalchemy import and_
 from schemas.config.auth import Token, TokenData
 import os
+from models.appointments import MedicalAppointment, LaboratoryAppointment
 
 router = APIRouter(
     prefix="/person",
@@ -21,6 +23,62 @@ async def read_users_me(db: Session = Depends(get_db), current_user: PersonGet =
         if current_user['discriminator'] == 'medical_personal':
             current_user['contracts'] = crud_medical.get_contracts(db, current_user['id'])
             current_user['specializations'] = crud_medical.get_specializations(db, current_user['id'])
+            db_appointment = db.query(MedicalAppointment).filter(
+                and_(
+                    MedicalAppointment.medical_personal_id == current_user['id'],
+                    MedicalAppointment.status == 1,
+                    MedicalAppointment.programmed_date == date.today()
+                )
+            ).all()
+
+            if db_appointment:
+                for ap in db_appointment:
+                    ap.status = 3
+                    db.commit()
+                    db.refresh(ap)
+
+            db_appointment = db.query(LaboratoryAppointment).filter(
+                and_(
+                    MedicalAppointment.medical_personal_id == current_user['id'],
+                    LaboratoryAppointment.status == 1,
+                    LaboratoryAppointment.programmed_date == date.today(),
+                )
+            ).all()
+
+            if db_appointment:
+                for ap in db_appointment:
+                    ap.status = 3
+                    db.commit()
+                    db.refresh(ap)
+        if current_user['discriminator'] == 'client':
+            db_appointment = db.query(MedicalAppointment).filter(
+                and_(
+                    MedicalAppointment.patient_id == current_user['id'],
+                    MedicalAppointment.status == 1,
+                    MedicalAppointment.programmed_date == date.today()
+                )
+            ).all()
+
+            if db_appointment:
+                for ap in db_appointment:
+                    ap.status = 3
+                    db.commit()
+                    db.refresh(ap)
+
+            db_appointment = db.query(LaboratoryAppointment).filter(
+                and_(
+                    MedicalAppointment.patient_id == current_user['id'],
+                    LaboratoryAppointment.status == 1,
+                    LaboratoryAppointment.programmed_date == date.today(),
+                )
+            ).all()
+
+            if db_appointment:
+                for ap in db_appointment:
+                    ap.status = 3
+                    db.commit()
+                    db.refresh(ap)
+
         del current_user['_password']
         return current_user
     else:

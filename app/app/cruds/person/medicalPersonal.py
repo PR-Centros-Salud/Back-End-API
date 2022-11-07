@@ -1,7 +1,12 @@
 from models.person.medicalPersonal import MedicalPersonal, Specialization
 from datetime import datetime, timedelta
 from models.person.person import Person
-from models.person.medicalPersonal import Contract, Schedule, ScheduleDay, ScheduleDayAppointment
+from models.person.medicalPersonal import (
+    Contract,
+    Schedule,
+    ScheduleDay,
+    ScheduleDayAppointment,
+)
 from schemas.person.medicalPersonal import (
     MedicalPersonalCreate,
     MedicalPersonalGet,
@@ -9,6 +14,7 @@ from schemas.person.medicalPersonal import (
     ContractCreate,
     SpecializationCreate,
     SpecializationUpdate,
+    ScheduleCreate,
 )
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -24,6 +30,13 @@ from validators.person.medicalPersonal import (
 )
 from cruds.person.person import delete_person
 from models.institution import Institution
+import os
+from dotenv import load_dotenv
+from twilio.rest import Client
+from password_generator import PasswordGenerator
+import phonenumbers
+
+load_dotenv()
 
 
 def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: int):
@@ -80,24 +93,60 @@ def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: in
 def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
     try:
         medicalPersonal = validate_create_person(db, medicalPersonal)
+        db_institution = validate_institution(db, medicalPersonal.institution_id)
+
+        num = phonenumbers.parse(medicalPersonal.phone, "BO")
+
+        if not phonenumbers.is_valid_number(num):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number is not valid.",
+            )
+
+        if db_institution == None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Institution not found",
+            )
+
         medicalPersonal = medicalPersonal.dict()
-        validate_schedule(
-            db,
-            medicalPersonal["institution_id"],
-            medicalPersonal["schedule"]["schedule_day_list"],
-        )
 
         contract = dict()
         contract["institution_id"] = medicalPersonal.pop("institution_id")
         contract["department"] = medicalPersonal.pop("department")
         contract["role"] = medicalPersonal.pop("role")
-        contract["schedule"] = medicalPersonal.pop("schedule")
+        contract["is_lab_personal"] = medicalPersonal.pop("is_lab_personal")
+
+        medicalPersonal["username"] = (
+            medicalPersonal["email"].split("@")[0]
+            + str(int(datetime.now().timestamp()))[5:]
+        )
+        pwo = PasswordGenerator()
+        pwo.maxlen = 16
+        pwo.minlen = 16
+        medicalPersonal["password"] = pwo.generate()
         db_medicalPersonal = MedicalPersonal(**medicalPersonal)
+
         db.add(db_medicalPersonal)
         db.commit()
         db.refresh(db_medicalPersonal)
+
         contract["medical_personal_id"] = db_medicalPersonal.id
-        create_medical_contract(db, contract)
+        db_contract = Contract(**contract)
+        db.add(db_contract)
+        db.commit()
+        db.refresh(db_contract)
+
+        client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+        body = (
+            "\nWelcome to Medico, your account has been created successfully.\n\nYour username is: \n"
+            + medicalPersonal["username"]
+            + "\nand your password is: \n"
+            + medicalPersonal["password"]
+        )
+        message = client.messages.create(
+            body=body, from_=os.getenv("TWILIO_NUMBER"), to=medicalPersonal["phone"]
+        )
 
     except exc.SQLAlchemyError as e:
         print(e)
@@ -105,6 +154,9 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Medical Personal error."
         )
+    except phonenumbers.phonenumberutil.NumberParseException as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return db_medicalPersonal
 
 
@@ -129,11 +181,11 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
 
             for medicalPersonal in db_medicalPersonal:
                 medicalPersonal = medicalPersonal.__dict__
-                medicalPersonal['contract'] = (
+                medicalPersonal["contract"] = (
                     db.query(Contract)
                     .filter(
                         and_(
-                            Contract.medical_personal_id == medicalPersonal['id'],
+                            Contract.medical_personal_id == medicalPersonal["id"],
                             Contract.institution_id == institution_id,
                             Contract.status == 1,
                         )
@@ -161,7 +213,6 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
                 #     )
                 #     .all()
                 # )
-                
 
                 del medicalPersonal["_password"]
             return db_medicalPersonal
@@ -172,62 +223,89 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
             )
 
 
-def create_medical_contract(db: Session, contract: ContractCreate):
+def add_schedule(db: Session, medical_id: int, schedule: ScheduleCreate):
     try:
-        db_institution = validate_institution(db, contract["institution_id"])
+        db_institution = validate_institution(db, schedule.institution_id)
+        validate_schedule(
+            db,
+            schedule.institution_id,
+            schedule.schedule_day_list,
+        )
         if db_institution != None:
             if db_institution.institution_type != 3:
-                schedule_day_list = contract["schedule"].pop("schedule_day_list")
-                
-                db_schedule = Schedule(**contract.pop("schedule"))
-                db.add(db_schedule)
-                db.commit()
-                db.refresh(db_schedule)
+                db_medicalPersonal = validate_medical_personal(db, medical_id)
+                db_contract = validate_contract(db, medical_id, schedule.institution_id)
 
-                for schedule_day in schedule_day_list:
-                    schedule_day["day"] = schedule_day["day"].value
-                    schedule_day["schedule_id"] = db_schedule.id
-                    db_schedule_day = ScheduleDay(**schedule_day)
-                    db.add(db_schedule_day)
+                if db_contract.schedule_id == None:
+                    schedule = schedule.dict()
+                    schedule_day_list = schedule.pop("schedule_day_list")
+                    schedule.pop("institution_id")
+                    db_schedule = Schedule(**schedule)
+                    db.add(db_schedule)
                     db.commit()
-                    db.refresh(db_schedule_day)
-                    start_time = datetime.strptime(schedule_day["start_time"].strftime("%H:%M:%S"), "%H:%M:%S")
-                    end_time = datetime.strptime(schedule_day["end_time"].strftime("%H:%M:%S"), "%H:%M:%S")
+                    db.refresh(db_schedule)
 
-                    delta = int(((end_time - start_time).seconds / 60) / db_schedule.estimated_appointment_time)
-
-                    start_appointment = datetime.combine(
-                        datetime.today(), schedule_day["start_time"])
-
-                    for i in range(delta):
-                        end_appointment = start_appointment + timedelta(minutes=db_schedule.estimated_appointment_time)
-                        db_schedule_day_appointment = ScheduleDayAppointment(
-                            schedule_day_id=db_schedule_day.id,
-                            start_time=start_appointment.time(),
-                            end_time=end_appointment.time(),
-                        )
-                        db.add(db_schedule_day_appointment)
+                    for schedule_day in schedule_day_list:
+                        schedule_day["day"] = schedule_day["day"].value
+                        schedule_day["schedule_id"] = db_schedule.id
+                        db_schedule_day = ScheduleDay(**schedule_day)
+                        db.add(db_schedule_day)
                         db.commit()
-                        start_appointment = end_appointment
+                        db.refresh(db_schedule_day)
+                        start_time = datetime.strptime(
+                            schedule_day["start_time"].strftime("%H:%M:%S"), "%H:%M:%S"
+                        )
+                        end_time = datetime.strptime(
+                            schedule_day["end_time"].strftime("%H:%M:%S"), "%H:%M:%S"
+                        )
 
+                        delta = int(
+                            ((end_time - start_time).seconds / 60)
+                            / db_schedule.estimated_appointment_time
+                        )
 
-                contract["schedule_id"] = db_schedule.id
-                db_contract = Contract(**contract)
-                db.add(db_contract)
-                db.commit()
-                db.refresh(db_contract)
+                        start_appointment = datetime.combine(
+                            datetime.today(), schedule_day["start_time"]
+                        )
+
+                        schedule_day_appointment_list = []
+                        for i in range(delta):
+                            end_appointment = start_appointment + timedelta(
+                                minutes=db_schedule.estimated_appointment_time
+                            )
+                            db_schedule_day_appointment = ScheduleDayAppointment(
+                                schedule_day_id=db_schedule_day.id,
+                                start_time=start_appointment.time(),
+                                end_time=end_appointment.time(),
+                            )
+                            schedule_day_appointment_list.append(
+                                db_schedule_day_appointment
+                            )
+                            start_appointment = end_appointment
+                        db.add_all(schedule_day_appointment_list)
+
+                    db_contract.schedule_id = db_schedule.id
+
+                    db.commit()
+                    db.refresh(db_contract)
+                    return db_contract
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Medical Personal has an active schedule.",
+                    )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Institution is not valid for this operation.",
                 )
+
     except exc.SQLAlchemyError as e:
         print(e)
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Contract error."
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Schedule error."
         )
-    return db_contract
 
 
 def update_MedicalPersonal(
@@ -320,18 +398,20 @@ def get_contracts(db: Session, id: int):
             )
             .first()
         )
-        contract.schedule = db_schedule
-        db_schedule_day = (
-            db.query(ScheduleDay)
-            .filter(
-                and_(
-                    ScheduleDay.schedule_id == contract.schedule_id,
-                    ScheduleDay.status == 1,
+        if db_schedule:
+            contract.schedule = db_schedule
+            db_schedule_day = (
+                db.query(ScheduleDay)
+                .filter(
+                    and_(
+                        ScheduleDay.schedule_id == contract.schedule_id,
+                        ScheduleDay.status == 1,
+                    )
                 )
+                .all()
             )
-            .all()
-        )
-        contract.schedule.schedule_day_list = db_schedule_day
+            if db_schedule_day:
+                contract.schedule.schedule_day_list = db_schedule_day
 
     return db_contract
 

@@ -4,9 +4,7 @@ from datetime import datetime, date, time
 
 class AppointmentCreate(BaseModel):
     programmed_date : date = Field(..., description="Programmed date of the appointment")
-    medical_personal_id : int = Field(..., description="Medical personal id")
     patient_id : int = Field(None, description="Patient id")
-    institution_id : int = Field(..., description="Institution id")
     schedule_day_appointment_id : int = Field(..., description="Schedule day appointment id")
 
     @validator('programmed_date')
@@ -19,7 +17,7 @@ class AppointmentCreate(BaseModel):
         orm_mode = True
 
 class AppointmentGet(BaseModel):
-    institution_id: int ## REVISAR POR DONDE EL LLAMADO
+    institution_id: int
     # Add your fields here
     pass
 
@@ -40,9 +38,14 @@ class AppointmentUpdate(BaseModel):
         return v
 
 class MedicalAppointmentCreate(AppointmentCreate):
-    pass
+    institution_id : int = Field(..., description="Institution id")
+    medical_personal_id : int = Field(..., description="Medical personal id")
+    class Config: 
+        orm_mode = True
 
 class LaboratoryAppointmentCreate(AppointmentCreate):
+    institution_id : int = Field(None, description="Institution id")
+    medical_personal_id : int = Field(None, description="Medical personal id")
     laboratory_service_id : int = Field(..., description="Laboratory service id")
 
 
