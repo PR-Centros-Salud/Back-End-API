@@ -40,7 +40,11 @@ class MedicalPersonalCreate(PersonCreate):
 
 class MedicalPersonalGet(PersonGet):
     """MedicalPersonalGet Schema"""
-    # Add your fields here
+    pass
+
+
+class LabPersonalGet(PersonGet):
+    """LabPersonalGet Schema"""
     pass
 
 

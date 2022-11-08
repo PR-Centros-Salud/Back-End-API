@@ -3,7 +3,7 @@ from cruds.person import medicalPersonal as crud_medicalPersonal
 from typing import Union
 from config.database import get_db
 from sqlalchemy.orm import Session
-from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, ContractCreate, ScheduleCreate
+from schemas.person.medicalPersonal import MedicalPersonalCreate, MedicalPersonalGet, MedicalPersonalUpdate, SpecializationCreate, SpecializationUpdate, ContractCreate, ScheduleCreate, LabPersonalGet
 from schemas.person.admin import AdminGet
 from schemas.person.person import PersonGet
 from validators.person.medicalPersonal import validate_medical_personal, validate_contract, validate_schedule
@@ -37,6 +37,14 @@ async def get_medical_personal_by_institution(institution_id: Union[str, None] =
         return crud_medicalPersonal.get_MedicalPersonal_by_institution(db, current_user.institution_id)
     else:
         return crud_medicalPersonal.get_MedicalPersonal_by_institution(db, institution_id)
+
+
+@router.get("/labspecialists/", response_model=list[LabPersonalGet])
+async def get_laboratory_specialists(id: int = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
+        return crud_medicalPersonal.get_LabSpecialists_by_institution(db, current_user.institution_id)
+    else:
+        return crud_medicalPersonal.get_LabSpecialists_by_institution(db, id)
 
 
 @router.delete("/delete/{medical_id}")

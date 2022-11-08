@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from schemas.person.admin import AdminCreate, AdminGet, AdminUpdate
 from schemas.person.superadmin import SuperAdminGet
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from config.oauth2 import get_current_active_user, authenticate_user, create_access_token, get_current_super_admin
+from config.oauth2 import get_current_active_user, authenticate_user, create_access_token, get_current_super_admin, get_current_admin
 
 router = APIRouter(
     prefix="/admin",
@@ -26,3 +26,8 @@ async def update_admin(admin: AdminUpdate, db: Session = Depends(get_db), curren
 @router.delete("/delete/{admin_id}")
 async def delete_admin(admin_id: int, db: Session = Depends(get_db), current_user: SuperAdminGet = Depends(get_current_super_admin)):
     return crud_admin.delete_admin(db=db, id=admin_id)
+
+
+@router.get("/get/{admin_id}", response_model=AdminGet)
+async def get_admin(admin_id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    return crud_admin.get_admin_by_id(db=db, id=admin_id)

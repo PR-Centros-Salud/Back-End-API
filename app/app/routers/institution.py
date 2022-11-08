@@ -12,6 +12,7 @@ from schemas.person.admin import AdminGet
 from cruds.person.admin import get_admin_by_id
 from fastapi import HTTPException, status
 
+
 router = APIRouter(
     prefix="/institution",
     tags=["Institutions"]
@@ -21,6 +22,7 @@ router = APIRouter(
 @router.get("/", response_model=list[InstitutionGet])
 def get_all_institutions(db: Session = Depends(get_db)):
     return crud_institution.get_all_institutions(db)
+
 
 @router.post("/create", response_model=InstitutionGet)
 async def create_institution(institution: InstitutionCreate, db: Session = Depends(get_db), current_user: SuperAdminGet = Depends(get_current_super_admin)):
@@ -45,12 +47,15 @@ async def delete_institution(id: int, db: Session = Depends(get_db), current_use
     return crud_institution.delete_institution(db=db, id=id)
 
 # Rooms
+
+
 @router.post("/room/create", response_model=RoomGet)
 async def create_room(room: RoomCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
         room.institution_id = current_user.institution_id
     return crud_institution.add_institution_room(db=db, room_create=room)
-        
+
+
 @router.get("/room/{id}", response_model=list[RoomGet])
 async def get_rooms(id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
@@ -62,6 +67,8 @@ async def get_rooms(id: int, db: Session = Depends(get_db), current_user: AdminG
     return crud_institution.get_institution_rooms(db=db, institution_id=id)
 
 # Laboratories
+
+
 @router.post("/laboratory/create")
 async def create_laboratory(laboratory: LaboratoryServiceCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
@@ -75,11 +82,16 @@ async def create_laboratory(laboratory: LaboratoryServiceCreate, db: Session = D
 
     return crud_institution.add_institution_laboratory(db=db, laboratory_create=laboratory)
 
-@router.get("/laboratory/{id}", response_model=list)
-async def get_institution_laboratories(id: int, db: Session = Depends(get_db)):
-    return crud_institution.get_institution_laboratories(db=db, institution_id=id)
 
-@router.get("/laboratory", response_model=list)
+@router.get("/laboratory")
+async def get_institution_laboratories(id: int = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    if current_user.discriminator == "admin":
+        return crud_institution.get_institution_laboratories(db=db, institution_id=current_user.institution_id)
+    else:
+        return crud_institution.get_institution_laboratories(db=db, institution_id=id)
+
+
+@router.get("/laboratory/name", response_model=list)
 async def get_laboratories_by_name(name: Union[str, None] = None, db: Session = Depends(get_db)):
     return crud_institution.get_laboratories_by_name(db=db, name=name)
 

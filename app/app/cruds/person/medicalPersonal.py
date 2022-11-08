@@ -223,6 +223,36 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
             )
 
 
+def get_LabSpecialists_by_institution(db: Session, institution_id: int):
+    db_institution = validate_institution(db, institution_id)
+    if db_institution != None:
+        if db_institution.institution_type == 1 or db_institution.institution_type == 4:
+            db_medicalPersonal = (
+                db.query(MedicalPersonal)
+                .join(Contract)
+                .filter(
+                    and_(
+                        Contract.institution_id == institution_id,
+                        Contract.status == 1,
+                        Contract.is_lab_personal == 1,
+                    )
+                )
+                .all()
+            )
+
+            for medicalPersonal in db_medicalPersonal:
+                medicalPersonal = medicalPersonal.__dict__
+                del medicalPersonal["_password"]
+
+            return db_medicalPersonal
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This Institution is not valid for this operation.",
+        )
+
+
 def add_schedule(db: Session, medical_id: int, schedule: ScheduleCreate):
     try:
         db_institution = validate_institution(db, schedule.institution_id)

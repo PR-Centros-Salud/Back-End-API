@@ -7,7 +7,7 @@ from validators.institution import validate_create_institution, validate_institu
 from validators.laboratoryService import validate_laboratory
 from models.laboratoryService import LaboratoryService
 from models.institution import Institution, Room
-from models.person.medicalPersonal import Contract
+from models.person.medicalPersonal import Contract, MedicalPersonal
 from models.person.admin import Admin
 from models.person.person import Person
 from datetime import datetime
@@ -37,6 +37,7 @@ def create_institution(db: Session, institution: InstitutionCreate):
 
 def update_institution(db: Session, institution: InstitutionUpdate, id: int):
     db_institution = validate_institution(db, id)
+    print(institution)
 
     if (institution.name):
         db_institution.name = institution.name
@@ -107,11 +108,26 @@ def add_institution_laboratory(db: Session, laboratory_create: LaboratoryService
         db.add(db_laboratory)
         db.commit()
         db.refresh(db_laboratory)
+        db_laboratory.medical_personal = db.query(MedicalPersonal).filter(and_(
+            MedicalPersonal.id == db_laboratory.medical_personal_id, MedicalPersonal.status == 1)).first()
+
         return db_laboratory
 
 def get_institution_laboratories(db: Session, institution_id: int):
     db_institution = validate_institution(db, institution_id)
-    return db.query(LaboratoryService).filter(and_(LaboratoryService.institution_id == institution_id, LaboratoryService.status == 1)).all()
+    db_lab_services = db.query(LaboratoryService).filter(and_(
+        LaboratoryService.institution_id == institution_id, LaboratoryService.status == 1)).all()
+    for lab_service in db_lab_services:
+        lab_service = lab_service.__dict__
+        lab_service["medical_personal"] = db.query(MedicalPersonal).filter(and_(
+            MedicalPersonal.id == lab_service["medical_personal_id"], MedicalPersonal.status == 1)).first().__dict__
+        lab_service["medical_personal"].pop("_password")
+        lab_service["medical_personal"].pop("status")
+        lab_service["medical_personal"].pop("medical_personal_status")
+        lab_service["medical_personal"].pop("medical_personal_updated_at")
+        lab_service["medical_personal"].pop("medical_personal_created_at")
+
+    return db_lab_services
 
 def get_laboratories_by_name(db: Session, name: str):
     return db.query(LaboratoryService).filter(and_(LaboratoryService.laboratory_service_name == name, LaboratoryService.status == 1)).all()

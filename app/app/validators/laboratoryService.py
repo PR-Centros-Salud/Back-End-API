@@ -34,7 +34,7 @@ def validate_laboratory(
             .filter(
                 and_(
                     LaboratoryService.laboratory_service_name
-                    == LaboratoryService.laboratory_service_name,
+                    == laboratory_create.laboratory_service_name,
                     LaboratoryService.institution_id
                     == laboratory_create.institution_id,
                     LaboratoryService.status == 1,

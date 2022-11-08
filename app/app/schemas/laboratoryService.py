@@ -1,4 +1,5 @@
 from pydantic import validator, Field, EmailStr, BaseModel
+from schemas.person.medicalPersonal import MedicalPersonalGet
 from typing import Optional, List
 from datetime import datetime, date
 
@@ -14,6 +15,8 @@ class LaboratoryServiceCreate(BaseModel):
 class LaboratoryServiceGet(BaseModel):
     institution_id: int
     laboratory_service_name: str
+    medical_personal: dict
+
 
 
 class LaboratoryServiceUpdate(BaseModel):
