@@ -19,12 +19,19 @@ router = APIRouter(
 
 @router.post("/create", response_model=MedicalPersonalGet)
 async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Session = Depends(get_db), current_user : AdminGet = Depends(get_current_admin)):
-    institution = validate_institution(db, medicalPersonal.institution_id)
-    if institution.institution_type not in [1,2,4]:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
-    if current_user.discriminator == 'admin' and current_user.institution_id != institution.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution")
-    return crud_medicalPersonal.create_MedicalPersonal(db, medicalPersonal)
+    if current_user.discriminator == "superadmin":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are not authorized to create a medical personal"
+        )
+    if current_user.discriminator == 'admin':
+        institution = validate_institution(db, current_user.institution_id)
+        
+        if institution.institution_type not in [1,2,4]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution type")
+
+        medicalPersonal.institution_id = current_user.institution_id
+        return crud_medicalPersonal.create_MedicalPersonal(db, medicalPersonal)
 
 
 @router.patch("/update", response_model=MedicalPersonalGet)

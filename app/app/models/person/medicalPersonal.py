@@ -102,7 +102,7 @@ class ScheduleDay(BaseTable):
     schedule_id = Column(Integer, ForeignKey("schedule.id"), nullable=False)
     schedule = relationship("Schedule", back_populates="schedule_day")
 
-    room_id = Column(Integer, ForeignKey("room.id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("room.id"), nullable=True)
     room = relationship("Room", back_populates="schedule_day")
 
     schedule_day_appointment = relationship(

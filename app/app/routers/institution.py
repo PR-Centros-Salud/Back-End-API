@@ -56,15 +56,12 @@ async def create_room(room: RoomCreate, db: Session = Depends(get_db), current_u
     return crud_institution.add_institution_room(db=db, room_create=room)
 
 
-@router.get("/room/{id}", response_model=list[RoomGet])
-async def get_rooms(id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+@router.get("/room/", response_model=list[RoomGet])
+async def get_rooms(id: int = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
-        if current_user.institution_id != id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You are not authorized to view this institution"
-            )
-    return crud_institution.get_institution_rooms(db=db, institution_id=id)
+        return crud_institution.get_institution_rooms(db=db, institution_id=current_user.institution_id)
+    else:
+        return crud_institution.get_institution_rooms(db=db, institution_id=id)
 
 # Laboratories
 

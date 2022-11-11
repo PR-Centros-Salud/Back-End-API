@@ -33,7 +33,7 @@ class ScheduleCreate(BaseModel):
 
 class MedicalPersonalCreate(PersonCreate):
     """MedicalPersonalCreate Schema"""
-    institution_id: int = Field(..., description="Institution id of the medicalPersonal")
+    institution_id: int = Field(None, description="Institution id of the medicalPersonal")
     department : str = Field(None, description="Department of the medicalPersonal")
     role : str = Field(..., description="Role of the medicalPersonal")
     is_lab_personal : int = Field(..., description="Is lab personal of the medicalPersonal")
