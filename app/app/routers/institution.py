@@ -49,19 +49,19 @@ async def delete_institution(id: int, db: Session = Depends(get_db), current_use
 # Rooms
 
 
-@router.post("/room/create", response_model=RoomGet)
+@router.post("/rooms/create", response_model=RoomGet)
 async def create_room(room: RoomCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
         room.institution_id = current_user.institution_id
     return crud_institution.add_institution_room(db=db, room_create=room)
 
 
-@router.get("/room/", response_model=list[RoomGet])
-async def get_rooms(id: int = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+@router.get("/rooms/", response_model=list[RoomGet])
+async def get_rooms(type: int = 1, id: int = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":
-        return crud_institution.get_institution_rooms(db=db, institution_id=current_user.institution_id)
+        return crud_institution.get_institution_rooms(db=db, institution_id=current_user.institution_id, type = type)
     else:
-        return crud_institution.get_institution_rooms(db=db, institution_id=id)
+        return crud_institution.get_institution_rooms(db=db, institution_id=id, type=type)
 
 # Laboratories
 
@@ -91,6 +91,11 @@ async def get_institution_laboratories(id: int = None, db: Session = Depends(get
 @router.get("/laboratory/name", response_model=list)
 async def get_laboratories_by_name(name: Union[str, None] = None, db: Session = Depends(get_db)):
     return crud_institution.get_laboratories_by_name(db=db, name=name)
+
+@router.delete("/laboratory/delete/{id}")
+async def delete_laboratory(id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
+    return crud_institution.delete_laboratory(db=db, id=id)
+
 
 # @router.patch("/laboratory/update/{id}", response_model=LaboratoryServiceGet)
 # async def update_laboratory(laboratory: LaboratoryServiceUpdate, id: int, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):

@@ -17,4 +17,6 @@ class LaboratoryService(BaseTable):
     laboratory_appointment = relationship("LaboratoryAppointment", back_populates="laboratory_service")
     medical_personal_id = Column(Integer, ForeignKey("medical_personal.id"), nullable=False)
     medical_personal = relationship("MedicalPersonal", back_populates="laboratory_service")
+    room_id = Column(Integer, ForeignKey("room.id"), nullable=False)
+    room = relationship("Room", back_populates="laboratory_service")
 

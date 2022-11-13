@@ -20,7 +20,7 @@ class ScheduleDayCreate(BaseModel):
     day : Day = Field(..., description="Day of the schedule")
     start_time: time = Field(..., description="Start time of the schedule")
     end_time: time = Field(..., description="End time of the schedule")
-    room_id: int = Field(..., description="Room id of the schedule")
+    room_id: int = Field(None, description="Room id of the schedule")
 
     class Config:
         orm_mode = True

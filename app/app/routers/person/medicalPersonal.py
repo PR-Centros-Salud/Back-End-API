@@ -38,6 +38,10 @@ async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Se
 async def update_medical_personal(medicalPersonal: MedicalPersonalUpdate, db: Session = Depends(get_db), current_user: MedicalPersonalGet = Depends(get_current_medical)):
     return crud_medicalPersonal.update_MedicalPersonal(db, medicalPersonal, current_user.id)
 
+@router.get("/get/{id}")
+async def get_medical_personal(id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    return crud_medicalPersonal.get_medical_personal(db, id)
+
 @router.get("/institution/")
 async def get_medical_personal_by_institution(institution_id: Union[str, None] = None, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
     if current_user.discriminator == "admin":

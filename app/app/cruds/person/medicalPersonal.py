@@ -7,6 +7,8 @@ from models.person.medicalPersonal import (
     ScheduleDay,
     ScheduleDayAppointment,
 )
+from models.institution import Room
+from models.location import Province
 from schemas.person.medicalPersonal import (
     MedicalPersonalCreate,
     MedicalPersonalGet,
@@ -215,7 +217,6 @@ def get_MedicalPersonal_by_institution(db: Session, institution_id: int):
                 #     .all()
                 # )
 
-                del medicalPersonal["_password"]
             return db_medicalPersonal
         else:
             raise HTTPException(
@@ -254,18 +255,112 @@ def get_LabSpecialists_by_institution(db: Session, institution_id: int):
         )
 
 
+def get_medical_personal(db: Session, medical_personal_id: int):
+    db_medical_personal = (
+        db.query(MedicalPersonal)
+        .filter(
+            and_(
+                MedicalPersonal.id == medical_personal_id,
+                MedicalPersonal.status == 1,
+            )
+        )
+        .first()
+    )
+    if db_medical_personal != None:
+        db_medical_personal = db_medical_personal.__dict__
+        db_medical_personal["contract"] = (
+            db.query(Contract)
+            .filter(
+                and_(
+                    Contract.medical_personal_id == medical_personal_id,
+                    Contract.status == 1,
+                )
+            )
+            .first()
+        ).__dict__
+        db_medical_personal["province"] = (
+            db.query(Province)
+            .filter(
+                and_(
+                    Province.id == db_medical_personal["province_id"],
+                )
+            )
+            .first()
+        ).__dict__
+
+        db_medical_personal["contract"]["schedule"] = (
+            db.query(Schedule)
+            .filter(
+                and_(
+                    Schedule.id == db_medical_personal["contract"]["schedule_id"],
+                    Schedule.status == 1,
+                )
+            )
+            .first()
+        ).__dict__
+
+        db_medical_personal["contract"]["schedule"]["schedule_day_list"] = (
+            db.query(ScheduleDay)
+            .filter(
+                and_(
+                    ScheduleDay.schedule_id
+                    == db_medical_personal["contract"]["schedule_id"],
+                    ScheduleDay.status == 1,
+                )
+            )
+            .all()
+        )
+
+        db_medical_personal["room"] = (
+            db.query(Room)
+            .filter(
+                and_(
+                    Room.id
+                    == db_medical_personal["contract"]["schedule"]["schedule_day_list"][
+                        0
+                    ].room_id,
+                    Room.status == 1,
+                )
+            )
+            .first()
+        ).__dict__
+
+        del db_medical_personal["_password"]
+        del db_medical_personal["created_at"]
+        del db_medical_personal["updated_at"]
+        del db_medical_personal["status"]
+        del db_medical_personal["medical_personal_created_at"]
+        del db_medical_personal["medical_personal_updated_at"]
+        del db_medical_personal["medical_personal_status"]
+        del db_medical_personal["photo_url"]
+        del db_medical_personal["contract"]["created_at"]
+        del db_medical_personal["contract"]["updated_at"]
+        del db_medical_personal["contract"]["status"]
+        del db_medical_personal["contract"]["schedule"]["created_at"]
+        del db_medical_personal["contract"]["schedule"]["updated_at"]
+        del db_medical_personal["contract"]["schedule"]["status"]
+        del db_medical_personal["room"]["created_at"]
+        del db_medical_personal["room"]["updated_at"]
+        del db_medical_personal["room"]["status"]
+        del db_medical_personal["room"]["institution_id"]
+
+        return db_medical_personal
+
+
 def add_schedule(db: Session, medical_id: int, schedule: ScheduleCreate):
     try:
         db_institution = validate_institution(db, schedule.institution_id)
-        validate_schedule(
-            db,
-            schedule.institution_id,
-            schedule.schedule_day_list,
-        )
+        db_medicalPersonal = validate_medical_personal(db, medical_id)
+        db_contract = validate_contract(db, medical_id, schedule.institution_id)
+        if db_contract.is_lab_personal == 0:
+            validate_schedule(
+                db,
+                schedule.institution_id,
+                schedule.schedule_day_list,
+                db_contract.is_lab_personal,
+            )
         if db_institution != None:
             if db_institution.institution_type != 3:
-                db_medicalPersonal = validate_medical_personal(db, medical_id)
-                db_contract = validate_contract(db, medical_id, schedule.institution_id)
 
                 if db_contract.schedule_id == None:
                     schedule = schedule.dict()
@@ -368,29 +463,50 @@ def update_MedicalPersonal(
 def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
     db_medicalPersonal = validate_medical_personal(db, medical_id)
 
-    db_contract = (
-        db.query(Contract)
-        .filter(
-            and_(
-                Contract.medical_personal_id == medical_id,
-                Contract.institution_id == institution_id,
-                Contract.status == 1,
+    if db_medicalPersonal != None:
+        db_contract = validate_contract(db, medical_id, institution_id)
+        if db_contract != None:
+            db_contract.status = 0
+            db_medicalPersonal.status = 0
+            db_medicalPersonal.medical_personal_status = 0
+            db_contract.end_date = datetime.utcnow()
+
+            if db_contract.schedule_id != None:
+                db_schedule = (
+                    db.query(Schedule)
+                    .filter(Schedule.id == db_contract.schedule_id)
+                    .first()
+                )
+                if db_schedule != None:
+                    db_schedule.status = 0
+                    db_schedule_day_list = (
+                        db.query(ScheduleDay)
+                        .filter(ScheduleDay.schedule_id == db_schedule.id)
+                        .all()
+                    )
+                    for db_schedule_day in db_schedule_day_list:
+                        db_schedule_day.status = 0
+                        db_schedule_day_appointment_list = db.query(ScheduleDayAppointment).filter(
+                            ScheduleDayAppointment.schedule_day_id == db_schedule_day.id
+                        ).all()
+                        
+                        for db_schedule_day_appointment in db_schedule_day_appointment_list:
+                            db_schedule_day_appointment.status = 0
+
+            db.commit()
+            db.refresh(db_contract)
+            return {"detail": "Medical Personal removed successfully"}
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Medical Personal is not assigned to this institution.",
             )
-        )
-        .first()
-    )
-
-    if not db_contract:
+    else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Medical Personal in Institution not found",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Medical Personal does not exist.",
         )
-
-    db_contract.status = 0
-    db_contract.end_date = datetime.utcnow()
-    db.commit()
-    db.refresh(db_contract)
-    return {"detail": "Medical Personal removed successfully"}
 
 
 def get_contracts(db: Session, id: int):

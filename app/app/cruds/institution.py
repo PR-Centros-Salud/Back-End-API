@@ -97,9 +97,13 @@ def add_institution_room(db: Session, room_create: RoomCreate):
         db.refresh(db_room)
         return db_room
 
-def get_institution_rooms(db: Session, institution_id: int):
+def get_institution_rooms(db: Session, institution_id: int, type : int):
     db_institution = validate_institution(db, institution_id)
-    return db.query(Room).filter(and_(Room.institution_id == institution_id, Room.status == 1)).all()
+    if type == 3:
+        return db.query(Room).filter(and_(
+            Room.institution_id == institution_id, Room.status == 1)).all()
+    else:
+        return db.query(Room).filter(and_(Room.institution_id == institution_id, Room.status == 1, Room.room_type == type)).all()
 
 def add_institution_laboratory(db: Session, laboratory_create: LaboratoryServiceCreate):
     if validate_laboratory(db, laboratory_create):
@@ -126,8 +130,17 @@ def get_institution_laboratories(db: Session, institution_id: int):
         lab_service["medical_personal"].pop("medical_personal_status")
         lab_service["medical_personal"].pop("medical_personal_updated_at")
         lab_service["medical_personal"].pop("medical_personal_created_at")
+        lab_service["room"] = db.query(Room).filter(and_(
+            Room.id == lab_service["room_id"], Room.status == 1)).first().__dict__
 
     return db_lab_services
 
 def get_laboratories_by_name(db: Session, name: str):
     return db.query(LaboratoryService).filter(and_(LaboratoryService.laboratory_service_name == name, LaboratoryService.status == 1)).all()
+
+def delete_laboratory(db: Session, id: int):
+    db_laboratory = validate_laboratory(db, id)
+    db_laboratory.status = 0
+    db.commit()
+    db.refresh(db_laboratory)
+    return db_laboratory

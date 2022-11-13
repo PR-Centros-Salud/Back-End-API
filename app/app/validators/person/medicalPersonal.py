@@ -43,12 +43,12 @@ def validate_contract(db: Session, medical_id: int, institution_id : int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contract not found")
 
 
-def validate_schedule(db: Session, institution_id: int, schedule_day_list: list) -> bool:
+def validate_schedule(db: Session, institution_id: int, schedule_day_list: list, is_lab_personal: int) -> bool:
     for schedule_day in schedule_day_list:
-        validate_schedule_day(db, schedule_day.day.value, schedule_day.room_id, institution_id)
+        validate_schedule_day(db, schedule_day.day.value, schedule_day.room_id, institution_id, is_lab_personal)
     return True
 
-def validate_schedule_day(db: Session, day: int, room_id: int, institution_id: bool) -> bool:
+def validate_schedule_day(db: Session, day: int, room_id: int, institution_id: int, is_lab_personal) -> bool:
     db_room = (
             db.query(Room)
             .filter(
@@ -67,6 +67,13 @@ def validate_schedule_day(db: Session, day: int, room_id: int, institution_id: b
             detail="Room not found",
         )
     else:
+        if is_lab_personal == 0 and db_room.room_type != 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Room must be a medical room",
+            )
+
+
         db_schedule = (
             db.query(ScheduleDay)
             .filter(

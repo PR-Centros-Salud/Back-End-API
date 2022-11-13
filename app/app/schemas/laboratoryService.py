@@ -10,6 +10,7 @@ class LaboratoryServiceCreate(BaseModel):
     medical_personal_id: int = Field(
         None, description="Medical personal id of the person in charge of the laboratory service"
     )
+    room_id : int = Field(..., description="Room id of the laboratory service")
 
 
 class LaboratoryServiceGet(BaseModel):

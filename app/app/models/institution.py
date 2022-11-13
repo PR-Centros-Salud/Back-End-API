@@ -54,4 +54,5 @@ class Room(BaseTable):
 
     schedule_day = relationship("ScheduleDay", back_populates="room")
     appointment = relationship("Appointment", back_populates="room")
+    laboratory_service = relationship("LaboratoryService", back_populates="room")
 
