@@ -137,16 +137,17 @@ def create_MedicalPersonal(db: Session, medicalPersonal: MedicalPersonalCreate):
         db.commit()
         db.refresh(db_contract)
 
-        client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+        # client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
         body = (
             "\nWelcome to Medico, your account has been created successfully.\n\nYour username is: \n"
             + medicalPersonal["username"]
             + "\nand your password is: \n"
             + medicalPersonal["password"]
         )
-        message = client.messages.create(
-            body=body, from_=os.getenv("TWILIO_NUMBER"), to=medicalPersonal["phone"]
-        )
+        # message = client.messages.create(
+        #     body=body, from_=os.getenv("TWILIO_NUMBER"), to=medicalPersonal["phone"]
+        # )
+        print(body)
 
     except exc.SQLAlchemyError as e:
         print(e)

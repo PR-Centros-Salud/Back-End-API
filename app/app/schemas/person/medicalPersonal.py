@@ -27,7 +27,7 @@ class ScheduleDayCreate(BaseModel):
 
 class ScheduleCreate(BaseModel):
     """ScheduleCreate Schema"""
-    institution_id : int = Field(..., description="Institution id of the schedule")
+    institution_id : int = Field(None, description="Institution id of the schedule")
     estimated_appointment_time : int = Field(..., description="Estimated appointment time of the medicalPersonal")
     schedule_day_list : list[ScheduleDayCreate] = Field(..., description="Schedule day list of the medicalPersonal")
 

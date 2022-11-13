@@ -65,8 +65,8 @@ async def delete_medical_personal(medical_id: int, db: Session = Depends(get_db)
 
 @router.post("/add-schedule/{medical_id}")
 async def add_schedule(medical_id: int, schedule: ScheduleCreate, db: Session = Depends(get_db), current_user: AdminGet = Depends(get_current_admin)):
-    if current_user.discriminator == 'admin' and current_user.institution_id != institution.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid institution")
+    if current_user.discriminator == 'admin' :
+        schedule.institution_id = current_user.institution_id
     return crud_medicalPersonal.add_schedule(db, medical_id, schedule)
     
     
