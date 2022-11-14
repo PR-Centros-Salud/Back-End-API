@@ -311,19 +311,25 @@ def get_medical_personal(db: Session, medical_personal_id: int):
             .all()
         )
 
-        db_medical_personal["room"] = (
-            db.query(Room)
-            .filter(
-                and_(
-                    Room.id
-                    == db_medical_personal["contract"]["schedule"]["schedule_day_list"][
-                        0
-                    ].room_id,
-                    Room.status == 1,
+        if db_medical_personal["contract"]["is_lab_personal"] == 0:
+            db_medical_personal["room"] = (
+                db.query(Room)
+                .filter(
+                    and_(
+                        Room.id
+                        == db_medical_personal["contract"]["schedule"][
+                            "schedule_day_list"
+                        ][0].room_id,
+                        Room.status == 1,
+                    )
                 )
-            )
-            .first()
-        ).__dict__
+                .first()
+            ).__dict__
+
+            del db_medical_personal["room"]["created_at"]
+            del db_medical_personal["room"]["updated_at"]
+            del db_medical_personal["room"]["status"]
+            del db_medical_personal["room"]["institution_id"]
 
         del db_medical_personal["_password"]
         del db_medical_personal["created_at"]
@@ -339,10 +345,6 @@ def get_medical_personal(db: Session, medical_personal_id: int):
         del db_medical_personal["contract"]["schedule"]["created_at"]
         del db_medical_personal["contract"]["schedule"]["updated_at"]
         del db_medical_personal["contract"]["schedule"]["status"]
-        del db_medical_personal["room"]["created_at"]
-        del db_medical_personal["room"]["updated_at"]
-        del db_medical_personal["room"]["status"]
-        del db_medical_personal["room"]["institution_id"]
 
         return db_medical_personal
 
@@ -486,11 +488,18 @@ def remove_medicalPersonal(db: Session, medical_id: int, institution_id: int):
                     )
                     for db_schedule_day in db_schedule_day_list:
                         db_schedule_day.status = 0
-                        db_schedule_day_appointment_list = db.query(ScheduleDayAppointment).filter(
-                            ScheduleDayAppointment.schedule_day_id == db_schedule_day.id
-                        ).all()
-                        
-                        for db_schedule_day_appointment in db_schedule_day_appointment_list:
+                        db_schedule_day_appointment_list = (
+                            db.query(ScheduleDayAppointment)
+                            .filter(
+                                ScheduleDayAppointment.schedule_day_id
+                                == db_schedule_day.id
+                            )
+                            .all()
+                        )
+
+                        for (
+                            db_schedule_day_appointment
+                        ) in db_schedule_day_appointment_list:
                             db_schedule_day_appointment.status = 0
 
             db.commit()

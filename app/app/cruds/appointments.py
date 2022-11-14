@@ -14,6 +14,10 @@ from models.person.medicalPersonal import ScheduleDay
 from schemas.person.person import PersonGet
 from typing import Union
 from datetime import date, timedelta
+from models.person.client import Client
+from models.person.medicalPersonal import ScheduleDayAppointment
+from models.laboratoryService import LaboratoryService
+from models.person.medicalPersonal import MedicalPersonal
 
 def create_medical_appointment(db: Session, appointment: Union[MedicalAppointmentCreate, LaboratoryAppointmentCreate]):
     try:
@@ -62,14 +66,24 @@ def create_medical_appointment(db: Session, appointment: Union[MedicalAppointmen
                 db.refresh(db_appointment)
                 return db_appointment
             else:
+                db_laboratory_service = (
+                    db.query(LaboratoryService)
+                    .filter(
+                        and_(
+                            LaboratoryService.id == appointment.laboratory_service_id,
+                            LaboratoryService.status == 1,
+                        )
+                    )
+                    .first()
+                )
                 db_appointment = LaboratoryAppointment(
                     patient_id=appointment.patient_id,
                     medical_personal_id=appointment.medical_personal_id,
                     institution_id=appointment.institution_id,
                     schedule_day_appointment_id=appointment.schedule_day_appointment_id,
                     programmed_date=appointment.programmed_date,
-                    room_id=db_schedule_day.room_id,
-                    laboratory_service_id=appointment.laboratory_service_id,
+                    room_id=db_laboratory_service.room_id,
+                    laboratory_service_id=appointment.laboratory_service_id
                 )
                 db.add(db_appointment)
                 db.commit()
@@ -183,25 +197,73 @@ def finish_appointment(db: Session, id: int, user: PersonGet, finished : Union[M
                 detail="You don't have permission to finish this appointment",
             )
 
-        if date.today() < db_appointment.programmed_date:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You can't finish an appointment before the programmed date",
-            )
+        # if date.today() < db_appointment.programmed_date:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="You can't finish an appointment before the programmed date",
+        #     )
 
         db_appointment.status = 4
 
         if type(finished) == MedicalAppointmentFinished:
+            print('B')
             if (finished.recipe):
+                print('A')
                 db_appointment.medical_appointment_recipe = finished.recipe
         else:
-            db_appointment.delivery_datetime = finished.delivery_datetime
+            db_appointment.laboratory_delivery_date = finished.delivery_datetime
 
             if (finished.result):
-                db_appointment.result = finished.result
+                db_appointment.laboratory_results_resume = finished.result
 
         db.commit()
         db.refresh(db_appointment)
+        return db_appointment
+    except exc.IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
+        )
+
+def get_appointment(db: Session, user: int, id: int, type: int):
+    try:
+        db_appointment = None
+
+        if type == 0:
+            db_appointment = db.query(MedicalAppointment).filter(
+                and_(MedicalAppointment.id == id, or_(MedicalAppointment.patient_id == user, MedicalAppointment.medical_personal_id == user))
+            ).first()
+        else:
+            db_appointment = db.query(LaboratoryAppointment).filter(
+                and_(LaboratoryAppointment.id == id, or_(LaboratoryAppointment.patient_id == user, LaboratoryAppointment.medical_personal_id == user))
+            ).first()
+
+            db_appointment.laboratory_service = db.query(LaboratoryService).filter(
+                LaboratoryService.id == db_appointment.laboratory_service_id,
+            ).first()
+
+        if not db_appointment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found"
+            )
+
+        db_appointment.medical_personal = db.query(MedicalPersonal).filter(
+            MedicalPersonal.id == db_appointment.medical_personal_id,
+        ).first()
+
+        db_appointment.patient = db.query(Client).filter(
+            Client.id == db_appointment.patient_id,
+        ).first()
+
+        db_appointment.room = db.query(Room).filter(
+            Room.id == db_appointment.room_id,
+        ).first()
+
+        db_appointment.schedule_day_appointment = db.query(ScheduleDayAppointment).filter(
+            ScheduleDayAppointment.id == db_appointment.schedule_day_appointment_id,
+        ).first()
+
+        
+
         return db_appointment
     except exc.IntegrityError:
         raise HTTPException(
@@ -220,6 +282,7 @@ def get_medical_personal_appointments(db: Session, medical_personal_id: int, app
                 db_appointments = db.query(MedicalAppointment).filter(
                     MedicalAppointment.medical_personal_id == medical_personal_id
                 ).all()
+                print(db_appointments)
             elif appointment_status == 6:
                 db_appointments = db.query(MedicalAppointment).filter(
                     and_(
@@ -240,6 +303,11 @@ def get_medical_personal_appointments(db: Session, medical_personal_id: int, app
                     .all()
                 )
             
+            for appointment in db_appointments:
+                appointment.patient = db.query(Client).filter(Client.id == appointment.patient_id).first()
+                appointment.room = db.query(Room).filter(Room.id == appointment.room_id).first()
+                appointment.schedule_day_appointment = db.query(ScheduleDayAppointment).filter(ScheduleDayAppointment.id == appointment.schedule_day_appointment_id).first()
+
             return db_appointments
         else:
             if appointment_status == 5:
@@ -265,6 +333,12 @@ def get_medical_personal_appointments(db: Session, medical_personal_id: int, app
                     )
                     .all()
                 )
+
+            for appointment in db_appointments:
+                appointment.patient = db.query(Client).filter(Client.id == appointment.patient_id).first()
+                appointment.room = db.query(Room).filter(Room.id == appointment.room_id).first()
+                appointment.schedule_day_appointment = db.query(ScheduleDayAppointment).filter(ScheduleDayAppointment.id == appointment.schedule_day_appointment_id).first()
+                appointment.laboratory_service = db.query(LaboratoryService).filter(LaboratoryService.id == appointment.laboratory_service_id).first()
             
             return db_appointments
     except exc.IntegrityError:

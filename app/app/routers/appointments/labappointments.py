@@ -27,6 +27,10 @@ async def create_appointment(appointment: LaboratoryAppointmentCreate, db: Sessi
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a client")
 
+@router.get('/get/{id}')
+async def get_appointment(id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    return crud_appointments.get_appointment(db=db, user=current_user.id, id=id,type=1)
+
 @router.patch('/confirm/{id}')
 async def confirm_appointment(id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
     if current_user.discriminator == "medical_personal":
