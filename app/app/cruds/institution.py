@@ -11,6 +11,29 @@ from models.person.medicalPersonal import Contract, MedicalPersonal
 from models.person.admin import Admin
 from models.person.person import Person
 from datetime import datetime
+from validators.location import validate_location
+
+def get_all_institution_labs(db: Session, province_id: int):
+    db_province = validate_location(db, province_id)
+    db_institutions = db.query(Institution).filter(and_(
+        Institution.province_id == province_id,
+        or_(
+            Institution.institution_type == 1,
+            Institution.institution_type == 4
+        )
+    )).all()
+    
+    return db_institutions
+
+def get_institution_laboratories(db: Session, institution_id: int):
+    db_institution = validate_institution(db, institution_id)
+    db_laboratories = db.query(LaboratoryService).filter(and_(
+        LaboratoryService.institution_id == institution_id, LaboratoryService.status == 1)).all()
+    for laboratory in db_laboratories:
+        laboratory.medical_personal = db.query(MedicalPersonal).filter(and_(
+            MedicalPersonal.id == laboratory.medical_personal_id, MedicalPersonal.status == 1)).first()
+    return db_laboratories
+
 
 def get_all_institutions(db: Session):
     return db.query(Institution).filter(Institution.status == 1).all()

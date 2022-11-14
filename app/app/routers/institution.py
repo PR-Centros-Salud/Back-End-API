@@ -23,6 +23,14 @@ router = APIRouter(
 def get_all_institutions(db: Session = Depends(get_db)):
     return crud_institution.get_all_institutions(db)
 
+@router.get("/province/{id}")
+def get_all_institutions(id: int, db: Session = Depends(get_db)):
+    return crud_institution.get_all_institution_labs(db, id)
+
+@router.get("/laboratoryservices/{id}")
+def get_all_laboratory_services(id: int, db: Session = Depends(get_db)):
+    return crud_institution.get_institution_laboratories(db, id)
+
 
 @router.post("/create", response_model=InstitutionGet)
 async def create_institution(institution: InstitutionCreate, db: Session = Depends(get_db), current_user: SuperAdminGet = Depends(get_current_super_admin)):

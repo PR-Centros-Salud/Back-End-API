@@ -40,6 +40,47 @@ import phonenumbers
 
 load_dotenv()
 
+def get_medicalPersonal_by_province(db, province_id: int):
+    db_province = validate_location(db, province_id)
+    db_medicalPersonal = (
+        db.query(MedicalPersonal)
+        .filter(
+            and_(
+                MedicalPersonal.province_id == province_id,
+                MedicalPersonal.status == 1,
+            )
+        )
+        .all()
+    )
+
+    for med in db_medicalPersonal:
+        db_contract = (
+            db.query(Contract)
+            .filter(
+                and_(
+                    Contract.medical_personal_id == med.id,
+                    Contract.status == 1,
+                )
+            )
+            .first()
+        )
+        if db_contract:
+            db_institution = (
+                db.query(Institution)
+                .filter(
+                    and_(
+                        Institution.id == db_contract.institution_id,
+                        Institution.status == 1,
+                    )
+                )
+                .first()
+            )
+            if db_institution:
+                med.institution = db_institution
+
+    return db_medicalPersonal
+
+
 
 def get_medicalPersonal_contract(db, medicalPersonal_id: int, institution_id: int):
     db_medicalPersonal = validate_medical_personal(db, medicalPersonal_id)
