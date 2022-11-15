@@ -42,6 +42,8 @@ def get_all_institution_labs(db: Session, province_id: int):
         .all()
     )
 
+    institutions = []
+
     for institution in db_institutions:
         institution.laboratories = (
             db.query(LaboratoryService)
@@ -53,19 +55,33 @@ def get_all_institution_labs(db: Session, province_id: int):
             )
             .all()
         )
-        for laboratory in institution.laboratories:
-            laboratory.medical_personal = (
-                db.query(MedicalPersonal)
-                .filter(
-                    and_(
-                        MedicalPersonal.id == laboratory.medical_personal_id,
-                        MedicalPersonal.status == 1,
-                    )
-                )
-                .first()
-            )
 
-    return db_institutions
+        if len(institution.laboratories) >= 1:
+
+            for laboratory in institution.laboratories:
+                laboratory.room = (
+                    db.query(Room)
+                    .filter(
+                        and_(
+                            Room.id == laboratory.room_id,
+                            Room.status == 1,
+                        )
+                    )
+                    .first()
+                )
+                laboratory.medical_personal = (
+                    db.query(MedicalPersonal)
+                    .filter(
+                        and_(
+                            MedicalPersonal.id == laboratory.medical_personal_id,
+                            MedicalPersonal.status == 1,
+                        )
+                    )
+                    .first()
+                )
+            institutions.append(institution)
+
+    return institutions
 
 
 def get_institution_laboratories(db: Session, institution_id: int):

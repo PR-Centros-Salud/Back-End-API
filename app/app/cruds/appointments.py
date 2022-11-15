@@ -17,7 +17,7 @@ from datetime import date, timedelta
 from models.person.client import Client
 from models.person.medicalPersonal import ScheduleDayAppointment
 from models.laboratoryService import LaboratoryService
-from models.person.medicalPersonal import MedicalPersonal
+from models.person.medicalPersonal import MedicalPersonal, Contract, Schedule, ScheduleDay, ScheduleDayAppointment
 
 def create_medical_appointment(db: Session, appointment: Union[MedicalAppointmentCreate, LaboratoryAppointmentCreate]):
     try:
@@ -439,6 +439,43 @@ def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
                     status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid query"
                 )
             return db_appointments
+    except exc.IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
+        )
+
+def get_available_times(db: Session, doctor_id : int, date_time : date):
+    try:
+        db_contract = db.query(Contract).filter(Contract.medical_personal_id == doctor_id).first()
+        db_schedule = db.query(Schedule).filter(Schedule.id == db_contract.schedule_id).first()
+
+        if db_schedule is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"
+            )
+
+        print(type(date_time))
+        db_schedule_day = db.query(ScheduleDay).filter(and_(
+            ScheduleDay.day == (date_time.weekday() + 1),
+            ScheduleDay.schedule_id == db_schedule.id
+        )).first()
+        if db_schedule_day is not None:
+            db_schedule_day_appointment = db.query(ScheduleDayAppointment).filter(ScheduleDayAppointment.schedule_day_id == db_schedule_day.id).all()
+
+            available_schedule_day = []
+
+            for schedule_day_appointment in db_schedule_day_appointment:
+                app = db.query(Appointment).filter(and_(
+                    Appointment.schedule_day_appointment_id == schedule_day_appointment.id,
+                    Appointment.programmed_date == date_time
+                )).first()
+
+                if app is None:
+                    available_schedule_day.append(schedule_day_appointment)
+            
+            db_schedule_day.schedule_day_appointment = available_schedule_day
+        
+        return db_schedule_day
     except exc.IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid data"

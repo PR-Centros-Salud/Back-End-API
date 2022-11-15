@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from schemas.person.person import PersonGet
 from cruds import appointments as crud_appointments
 from models.laboratoryService import LaboratoryService
+from datetime import date
 
 router = APIRouter(
     prefix="/labappointments",
@@ -65,3 +66,8 @@ async def get_client_appointments(q: int, db: Session = Depends(get_db), current
         return crud_appointments.get_client_appointments(db, patient_id=current_user.id, q=q, type=2)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not a client")
+
+@router.get('/available-times/{id}')
+async def get_available_times(id: int, date_time: date, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    return crud_appointments.get_available_times(db, doctor_id=id, date_time=date_time)
+    
