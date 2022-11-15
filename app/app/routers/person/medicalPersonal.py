@@ -16,9 +16,9 @@ router = APIRouter(
     tags=["MedicalPersonal"]
 )
 
-@router.get('/province/{province_id}')
-async def get_medical_personal_by_province(province_id: int, db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
-    return crud_medicalPersonal.get_medicalPersonal_by_province(db, province_id=province_id)
+@router.get('/province/')
+async def get_medical_personal_by_province(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    return crud_medicalPersonal.get_medicalPersonal_by_province(db, province_id=current_user.province_id)
 
 @router.post("/create", response_model=MedicalPersonalGet)
 async def create_medical_personal(medicalPersonal: MedicalPersonalCreate, db: Session = Depends(get_db), current_user : AdminGet = Depends(get_current_admin)):

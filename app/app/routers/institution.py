@@ -5,7 +5,7 @@ from config.database import get_db
 from sqlalchemy.orm import Session
 from schemas.institution import InstitutionCreate, InstitutionGet, InstitutionUpdate, RoomCreate, RoomGet
 from schemas.laboratoryService import LaboratoryServiceCreate, LaboratoryServiceGet, LaboratoryServiceUpdate
-from config.oauth2 import get_current_super_admin, get_current_admin
+from config.oauth2 import get_current_super_admin, get_current_admin, get_current_active_user
 from schemas.person.superadmin import SuperAdminGet
 from schemas.person.person import PersonGet
 from schemas.person.admin import AdminGet
@@ -23,9 +23,9 @@ router = APIRouter(
 def get_all_institutions(db: Session = Depends(get_db)):
     return crud_institution.get_all_institutions(db)
 
-@router.get("/province/{id}")
-def get_all_institutions(id: int, db: Session = Depends(get_db)):
-    return crud_institution.get_all_institution_labs(db, id)
+@router.get("/province/")
+def get_all_institutions(db: Session = Depends(get_db), current_user: PersonGet = Depends(get_current_active_user)):
+    return crud_institution.get_all_institution_labs(db, current_user.province_id)
 
 @router.get("/laboratoryservices/{id}")
 def get_all_laboratory_services(id: int, db: Session = Depends(get_db)):
