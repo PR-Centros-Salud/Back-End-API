@@ -65,7 +65,7 @@ def get_medicalPersonal_by_province(db, province_id: int):
             )
             .all()
         )
-        if db_contract and db_contract.is_lab_personal == 0:
+        if db_contract and db_contract[0].is_lab_personal == 0:
             med.contract = db_contract
             db_institution = (
                 db.query(Institution)
