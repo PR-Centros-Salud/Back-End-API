@@ -79,9 +79,9 @@ def get_medicalPersonal_by_province(db, province_id: int):
             )
             if db_institution:
                 med.institution = db_institution
-        meds.append(med)
+            meds.append(med)
 
-    return db_medicalPersonal
+    return meds
 
 
 
