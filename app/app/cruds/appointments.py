@@ -532,7 +532,7 @@ def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
                 ap.medical_personal.contract = (
                     db.query(Contract)
                     .filter(Contract.medical_personal_id == ap.medical_personal.id)
-                    .first()
+                    .all()
                 )
                 ap.institution = (
                     db.query(Institution)
