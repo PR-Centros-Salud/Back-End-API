@@ -24,7 +24,7 @@ from models.baseTable import BaseTable
 
 class Contract(BaseTable):
     __tablename__ = "contract"
-``
+
     # Relationships
     start_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     end_date = Column(DateTime, nullable=True)
@@ -64,7 +64,7 @@ class MedicalPersonal(Person):
     laboratory_service = relationship(
         "LaboratoryService", back_populates="medical_personal"
     )
-    
+
 
 class Specialization(BaseTable):
     __tablename__ = "specialization"
