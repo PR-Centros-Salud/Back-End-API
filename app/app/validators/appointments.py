@@ -80,8 +80,8 @@ def validate_appointment(
             .filter(
                 and_(
                     LaboratoryAppointment.patient_id == appointment_create.patient_id,
-                    or_(LaboratoryAppointment.status == 1, Appointment.status == 2),
-                    Appointment.laboratory_service_id
+                    or_(LaboratoryAppointment.status == 1, LaboratoryAppointment.status == 2),
+                    LaboratoryAppointment.laboratory_service_id
                     == appointment_create.laboratory_service_id,
                 )
             )
