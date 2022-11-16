@@ -24,7 +24,7 @@ from models.baseTable import BaseTable
 
 class Contract(BaseTable):
     __tablename__ = "contract"
-
+``
     # Relationships
     start_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     end_date = Column(DateTime, nullable=True)

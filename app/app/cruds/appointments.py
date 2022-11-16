@@ -559,7 +559,6 @@ def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
                     .filter(
                         and_(
                             LaboratoryAppointment.patient_id == patient_id,
-                            LaboratoryAppointment.status == 2,
                             LaboratoryAppointment.programmed_date >= date.today(),
                         )
                     )
@@ -572,7 +571,6 @@ def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
                     .filter(
                         and_(
                             LaboratoryAppointment.patient_id == patient_id,
-                            LaboratoryAppointment.status == 4,
                             LaboratoryAppointment.programmed_date <= date.today(),
                         )
                     )
