@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from models.person.medicalPersonal import MedicalPersonal
-from models.appointments import Appointment
+from models.appointments import Appointment, MedicalAppointment, LaboratoryAppointment
 from models.person.medicalPersonal import ScheduleDay, Schedule, ScheduleDayAppointment
 from models.institution import Institution
 from schemas.appointments import AppointmentCreate, AppointmentGet, AppointmentUpdate
@@ -11,6 +11,7 @@ from validators.person.medicalPersonal import validate_medical_personal
 from schemas.appointments import MedicalAppointmentCreate, LaboratoryAppointmentCreate
 from datetime import timedelta, datetime
 from typing import Union
+
 
 def validate_appointment(
     db: Session,
@@ -53,24 +54,45 @@ def validate_appointment(
             detail="Medical Personal does not work on this time",
         )
 
-    db_appointment = (
-        db.query(Appointment)
-        .filter(
-            and_(
-                Appointment.patient_id == appointment_create.patient_id,
-                or_(Appointment.status == 1, Appointment.status == 2),
-                Appointment.medical_personal_id
-                == appointment_create.medical_personal_id,
+    if type(appointment_create) == MedicalAppointmentCreate:
+        db_appointment = (
+            db.query(Appointment)
+            .filter(
+                and_(
+                    Appointment.patient_id == appointment_create.patient_id,
+                    or_(Appointment.status == 1, Appointment.status == 2),
+                    Appointment.medical_personal_id
+                    == appointment_create.medical_personal_id,
+                )
             )
+            .first()
         )
-        .first()
-    )
 
-    if db_appointment:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Client already has a pending appointment with this medical personal",
+        if db_appointment:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Client already has a pending appointment with this medical personal",
+            )
+
+    if type(appointment_create) == LaboratoryAppointmentCreate:
+        db_appointment = (
+            db.query(LaboratoryAppointment)
+            .filter(
+                and_(
+                    LaboratoryAppointment.patient_id == appointment_create.patient_id,
+                    or_(LaboratoryAppointment.status == 1, Appointment.status == 2),
+                    Appointment.laboratory_service_id
+                    == appointment_create.laboratory_service_id,
+                )
+            )
+            .first()
         )
+
+        if db_appointment:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Client already has a pending appointment with this laboratory service",
+            )
 
     db_appointment = (
         db.query(Appointment)

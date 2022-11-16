@@ -32,7 +32,7 @@ from models.person.medicalPersonal import (
     ScheduleDay,
     ScheduleDayAppointment,
 )
-
+from models.institution import Institution
 
 def create_medical_appointment(
     db: Session,
@@ -597,6 +597,11 @@ def get_client_appointments(db: Session, patient_id: int, q: str, type: int):
                     db.query(MedicalPersonal)
                     .filter(MedicalPersonal.id == ap.medical_personal_id)
                     .first()
+                )
+                ap.medical_personal.contract = (
+                    db.query(Contract)
+                    .filter(Contract.medical_personal_id == ap.medical_personal_id)
+                    .all()
                 )
                 ap.schedule_day_appointment = (
                     db.query(ScheduleDayAppointment)
