@@ -1,23 +1,23 @@
 Para despliegue de Front Web
-* Clonar el repositorio 
+* Clonar el repositorio
 * npm install --global -yarn
-* Vas al repo 
+* Vas al repo
 * ejecutas "yarn"
 
 Para despliegue de Front Mobile
-* Clonar el repositorio 
+* Clonar el repositorio
 * npm install --global -yarn
-* Vas al repo 
+* Vas al repo
 * ejecutas "yarn"
 
 Para despliegue de Backend
 * Crear cuenta en Twilio
 * Copiar los credenciales de Twilio
 * pegarlos en el .env
-* Crear cuenta en Railway 
+* Crear cuenta en Railway
 * Crear una instancia de MySql en Railway
 * Clonar el repositorio
-* cd al repositorio 
+* cd al repositorio
 * en Windows: ./venv/bin/activate
 * en Unix: source ~/Repo/.venv/bin/activate
 * cd app
