@@ -1,15 +1,10 @@
 # ¿COMO DESPLEGAR EL SISTEMA?
 
-<br>
-
 ## SOFTWARE NECESARIO
 
 <br>
 
 * Python 3.10 +
-* NodeJS
-* YARN
-* ExpoGO (Disponible tanto en IOS como en ANDROID)
 
 <br>
 
@@ -46,8 +41,6 @@ Instalado el repositorio y levantado el entorno virtual hay que modificar el *.e
     TWILIO_ACCOUNT_SID=(SID de twilio)
     TWILIO_AUTH_TOKEN=(auth token de twilio)
     TWILIO_NUMBER=(numero de telefono twilio)
-
-<br>
 
 Por ultimo basta con recargar los cambios.
 
